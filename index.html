@@ -1,0 +1,1926 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>IzenRide</title>
+<meta name="description" content="IzenRide, l'application de navigation et de communauté moto : GPS avec guidage vocal gratuit, croisements, messagerie, sorties et alerte SOS. Disponible sur Android et iPhone, en 9 langues.">
+<meta name="theme-color" content="#000000">
+<meta property="og:type" content="website">
+<meta property="og:title" content="IzenRide, le cockpit moto">
+<meta property="og:description" content="Pensé pour la route. Bâti pour ceux qui la connaissent.">
+<meta property="og:image" content="assets/screens/v319-carte.jpg">
+<link rel="icon" href="assets/img/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap">
+<style>
+/* Concept : une sortie de nuit. La page se lit comme un trajet : la route défile dans le hero,
+   le tableau de bord compte les kilomètres au scroll, et un bandeau GPS annonce la section suivante. */
+:root{
+  --night:#000000;      /* fond, bleu nuit de l'app */
+  --asphalt:#0A0A0C;    /* surfaces */
+  --deck:#111216;       /* panneaux */
+  --line:#1E2129;       /* traits */
+  --ink:#F3F5F9;        /* texte */
+  --mute:#8D94A3;       /* texte secondaire */
+  --signal:#2F7BFF;     /* bleu d'action de l'app */
+  --glow:#6FA6FF;       /* phare */
+  --paint:#6FA6FF;      /* marquage, dangers, Premium */
+  --trail:#A9C8FF;      /* second motard */
+  --sos:#F04A4A;        /* alerte */
+  --ok:#6FA6FF;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --gutter:clamp(16px,4vw,44px);
+  --max:1240px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--night);color:var(--ink);font:400 1.0625rem/1.6 var(--body);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{max-width:100%;display:block}
+a{color:inherit}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--glow);outline-offset:3px;border-radius:6px}
+.wrap{max-width:var(--max);margin:0 auto;padding-inline:var(--gutter)}
+h1,h2,h3{font-family:var(--display);font-weight:700;line-height:.95;letter-spacing:-.01em;margin:0;text-wrap:balance}
+h2{font-size:clamp(2.6rem,6vw,5rem);text-transform:uppercase;font-weight:800}
+h3{font-size:1.65rem;font-weight:700;line-height:1.05}
+p{margin:0}
+.lede{color:var(--mute);font-size:1.15rem;max-width:34em}
+.tabnum{font-variant-numeric:tabular-nums}
+.skip{position:absolute;left:-999px;top:8px;background:var(--signal);color:#fff;padding:8px 14px;border-radius:6px;z-index:60}
+.skip:focus{left:8px}
+
+/* Boutons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 24px;border-radius:999px;font:600 1rem/1 var(--body);text-decoration:none;border:1px solid transparent;cursor:pointer;white-space:nowrap;transition:transform .15s,background .15s,border-color .15s}
+.btn:active{transform:scale(.98)}
+.btn svg{width:20px;height:20px;flex:none}
+.btn-primary{background:var(--signal);color:#fff;box-shadow:0 10px 30px -10px color-mix(in srgb,var(--signal) 80%,transparent)}
+.btn-primary:hover{background:color-mix(in srgb,var(--signal) 85%,white)}
+.btn-ghost{border-color:color-mix(in srgb,var(--ink) 22%,transparent);background:color-mix(in srgb,var(--night) 75%,transparent);}
+.btn-ghost:hover{border-color:var(--ink)}
+
+/* En-tête */
+.top{position:fixed;left:0;right:0;top:0;padding-top:env(safe-area-inset-top,0px);z-index:30;transition:background .3s,border-color .3s;border-bottom:1px solid transparent}
+.top.solid{background:color-mix(in srgb,var(--night) 96%,transparent);border-color:var(--line)}
+.top .wrap{display:flex;align-items:center;gap:28px;height:68px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font:800 1.55rem/1 var(--display);letter-spacing:.01em}
+.brand img{width:36px;height:36px;border-radius:50%;box-shadow:0 0 0 2px color-mix(in srgb,var(--ink) 15%,transparent)}
+.brand b{color:var(--glow);font-weight:800}
+.nav{display:flex;gap:26px;margin-left:auto;font-weight:500;font-size:.98rem}
+.nav a{text-decoration:none;color:var(--mute);position:relative;padding-block:6px}
+.nav a:hover,.nav a.here{color:var(--ink)}
+.nav a.here::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:2px;border-radius:2px;background:var(--paint)}
+.top .btn{min-height:42px;padding:0 20px}
+.progress{position:absolute;left:0;bottom:-1px;height:2px;width:100%;transform-origin:left;transform:scaleX(0);background:linear-gradient(90deg,var(--signal),var(--glow))}
+@media (max-width:900px){.nav{display:none}.top .btn{margin-left:auto}}
+
+/* ===== Hero : la route ===== */
+.hero{position:relative;min-height:min(980px,100svh);display:grid;grid-template-rows:1fr auto;overflow:hidden;isolation:isolate;background:radial-gradient(70% 50% at 60% 70%,rgba(47,123,255,.14) 0%,transparent 70%),#000}
+.hero canvas{position:absolute;left:-22%;width:144%;top:-36%;height:136%;background:radial-gradient(60% 50% at 50% 74%,rgba(47,123,255,.10),transparent 70%);z-index:-1;transform-origin:50% 100%;transform:perspective(1100px) rotateX(50deg);will-change:transform}
+.hero-shade{position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(90deg,rgba(0,0,0,.94) 0%,rgba(0,0,0,.72) 30%,rgba(0,0,0,0) 58%),linear-gradient(180deg,#000000 0%,rgba(0,0,0,.92) 26%,rgba(0,0,0,0) 50%)}
+.nav-toast{position:absolute;left:50%;z-index:3;display:flex;align-items:center;gap:10px;padding:8px 16px 8px 8px;border-radius:999px;background:#07122A;border:1px solid color-mix(in srgb,var(--trail) 55%,transparent);box-shadow:0 18px 40px -15px #000;white-space:nowrap;opacity:0;transform:translate(-50%,10px);transition:opacity .35s,transform .35s;pointer-events:none}
+.nav-toast.on{opacity:1;transform:translate(-50%,0)}
+.nav-toast img{width:30px;height:30px;border-radius:50%}
+.nav-toast b{display:block;font:700 1rem/1.1 var(--body)}
+.nav-toast span{display:block;font-size:.82rem;color:var(--mute)}
+.sim-tag{position:absolute;right:var(--gutter);top:84px;z-index:3;display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;font-size:.8rem;color:var(--mute);background:color-mix(in srgb,var(--night) 70%,transparent);border:1px solid var(--line);}
+.sim-tag::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.readout.man b{display:flex;align-items:center;gap:8px}
+.readout.man svg{width:22px;height:22px;flex:none;color:var(--glow);transition:transform .4s}
+.readout.man em{font-style:normal}
+.readout.man span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hero-main{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:40px;align-items:center;padding-top:clamp(96px,12vh,128px);padding-bottom:20px}
+.hero-phone .phone{width:min(268px,70vw)}
+.hero-main > *{min-width:0}
+.hero h1{font-size:clamp(4rem,10vw,8.8rem);text-transform:uppercase;font-weight:800;line-height:.82;letter-spacing:-.015em}
+.hero h1 .l2{display:block;font-style:italic;color:transparent;-webkit-text-stroke:2px color-mix(in srgb,var(--ink) 75%,transparent);padding-left:.12em}
+.hero .lede{margin-top:30px;color:color-mix(in srgb,var(--ink) 82%,transparent);font-size:1.2rem}
+.ctas{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
+.hero-phone{position:relative;justify-self:center;z-index:1}
+.hero-phone::before{content:"";position:absolute;inset:-12% -30%;background:radial-gradient(closest-side,color-mix(in srgb,var(--signal) 40%,transparent),transparent);filter:blur(30px);z-index:-1}
+.mount{position:absolute;left:50%;bottom:-34px;width:44%;height:46px;transform:translateX(-50%);border-radius:0 0 18px 18px;background:linear-gradient(180deg,#14161B,#050506);border:1px solid var(--line);border-top:none;z-index:-1}
+.mount::after{content:"";position:absolute;left:50%;top:100%;width:16px;height:60px;transform:translateX(-50%);background:linear-gradient(90deg,#050506,#1A1D24,#050506)}
+
+/* Tableau de bord */
+.cluster{position:relative;z-index:2;margin-bottom:clamp(18px,3vh,32px);display:grid;grid-template-columns:auto repeat(4,minmax(0,1fr));align-items:center;gap:6px;padding:12px 14px;border-radius:24px;background:color-mix(in srgb,var(--asphalt) 94%,transparent);border:1px solid color-mix(in srgb,var(--ink) 10%,transparent);box-shadow:0 30px 60px -30px #000}
+.gauge{position:relative;width:132px;height:84px;margin-right:10px}
+.gauge svg{width:100%;height:100%;overflow:visible}
+.gauge .spd{position:absolute;left:0;right:0;bottom:2px;text-align:center;font:800 2rem/1 var(--display)}
+.gauge .spd small{display:block;font:500 .72rem/1.2 var(--body);color:var(--mute)}
+.readout{display:grid;gap:2px;padding:6px 16px;border-left:1px solid var(--line)}
+.readout span{font-size:.82rem;color:var(--mute)}
+.readout b{font:700 1.7rem/1 var(--display)}
+.readout b i{font-style:normal;font-size:1rem;color:var(--mute);font-weight:600;margin-left:3px}
+@media (max-width:900px){
+  .hero{min-height:0}
+  .hero-main{grid-template-columns:1fr;padding-top:104px}
+  .hero-phone{margin-top:20px;margin-bottom:40px}
+  .cluster{grid-template-columns:auto 1fr 1fr;row-gap:10px}
+  .cluster .readout:nth-of-type(3),.cluster .readout:nth-of-type(4){display:none}
+  .sim-tag{top:auto;bottom:528px;left:var(--gutter);right:auto}
+  .hero-phone{display:none}
+  .hero-shade{background:linear-gradient(180deg,rgba(0,0,0,.95) 0%,rgba(0,0,0,.8) 40%,rgba(0,0,0,0) 68%)}
+  .hero-main{padding-bottom:440px}
+}
+@media (max-width:480px){.gauge{width:108px;height:70px}.gauge .spd{font-size:1.6rem}.readout{padding:4px 10px}.readout b{font-size:1.4rem}}
+
+/* Téléphone */
+.phone{position:relative;width:min(310px,76vw);aspect-ratio:540/1119;max-width:100%;border-radius:42px;padding:10px;background:linear-gradient(145deg,#2A2E37,#050506 40%,#0E1016);box-shadow:0 40px 90px -30px rgba(0,0,0,.9),inset 0 0 0 1px rgba(255,255,255,.08)}
+.phone::before{content:"";position:absolute;top:18px;left:50%;width:30%;height:22px;transform:translateX(-50%);border-radius:20px;background:#000000;z-index:1}
+.phone img{width:100%;height:100%;object-fit:cover;border-radius:33px;background:var(--deck)}
+.phone.sm{width:min(250px,64vw);border-radius:36px;padding:8px}
+.phone.sm::before{top:14px;height:17px}
+.phone.sm img{border-radius:29px}
+
+/* Bandeau GPS */
+.gps{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:25;display:flex;align-items:center;gap:14px;padding:8px 18px 8px 8px;border-radius:20px;background:#07122A;border:1px solid color-mix(in srgb,var(--signal) 45%,transparent);box-shadow:0 20px 50px -15px #000;text-decoration:none;transform:translate(-50%,140%);transition:transform .45s cubic-bezier(.2,.8,.2,1);max-width:calc(100vw - 32px)}
+.gps.on{transform:translate(-50%,0)}
+.gps .turn{width:46px;height:46px;flex:none;border-radius:14px;background:var(--signal);display:grid;place-items:center}
+.gps .turn svg{width:26px;height:26px;transition:transform .3s}
+.gps .txt{display:grid;line-height:1.15;min-width:0}
+.gps .dist{font:800 1.45rem/1 var(--display)}
+.gps .to{color:var(--mute);font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gps .to b{color:var(--ink);font-weight:600}
+
+/* Sections */
+section{scroll-margin-top:80px;position:relative}
+.band{padding-block:clamp(84px,11vw,150px)}
+.kicker{display:inline-flex;align-items:center;gap:10px;font:700 1.05rem/1 var(--display);color:var(--paint);letter-spacing:.02em}
+.kicker svg{width:22px;height:22px}
+.head{display:grid;gap:22px;max-width:760px}
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(36px,6vw,90px);align-items:center}
+.split > *{min-width:0}
+@media (max-width:900px){.split{grid-template-columns:1fr}}
+
+.checks{list-style:none;margin:0;padding:0;display:grid;gap:16px}
+.checks li{display:grid;grid-template-columns:30px 1fr;gap:12px;align-items:start}
+.checks .ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:color-mix(in srgb,var(--signal) 16%,transparent);color:var(--glow)}
+.checks .ic svg{width:17px;height:17px}
+.checks b{font-weight:600;display:block}
+.checks span{color:var(--mute)}
+
+/* Croisement */
+.mapcard{position:relative;border-radius:30px;overflow:hidden;background:#050506;border:1px solid var(--line);aspect-ratio:5/4;box-shadow:0 40px 80px -40px #000}
+.mapcard canvas{position:absolute;inset:0;width:100%;height:100%}
+.mapcard .chip{position:absolute;top:16px;left:16px;padding:7px 12px;border-radius:999px;background:color-mix(in srgb,var(--night) 80%,transparent);border:1px solid var(--line);font-size:.85rem;color:var(--mute);}
+.mapcard .counter{position:absolute;top:14px;right:16px;text-align:right}
+.mapcard .counter b{display:block;font:800 3rem/1 var(--display)}
+.mapcard .counter span{font-size:.85rem;color:var(--mute)}
+.logbook{position:absolute;left:16px;right:16px;bottom:16px;display:grid;gap:8px}
+.entry{display:grid;grid-template-columns:34px 1fr auto;gap:12px;align-items:center;padding:9px 12px;border-radius:14px;background:color-mix(in srgb,var(--asphalt) 88%,transparent);border:1px solid var(--line);font-size:.95rem;animation:slidein .5s cubic-bezier(.2,.8,.2,1)}
+.entry .av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font:700 1rem/1 var(--display);color:#fff}
+.entry b{font-weight:600}
+.entry span{color:var(--mute);display:block;font-size:.85rem;line-height:1.2}
+.entry time{color:var(--mute);font-size:.85rem}
+@keyframes slidein{from{opacity:0;transform:translateY(12px)}}
+.cross-wrap{position:relative}
+@media (max-width:520px){.mapcard{aspect-ratio:4/5}}
+
+/* Routes */
+.roads{overflow:hidden;border-block:1px solid var(--line);padding-block:26px;background:var(--asphalt)}
+.roads-track{display:flex;gap:56px;width:max-content;animation:roll 60s linear infinite;will-change:transform}
+.roads-track span{display:flex;align-items:center;gap:56px;font:800 italic clamp(2rem,5vw,3.6rem)/1 var(--display);text-transform:uppercase;white-space:nowrap;color:transparent;-webkit-text-stroke:1.5px color-mix(in srgb,var(--ink) 40%,transparent)}
+.roads-track span::after{content:"";width:46px;height:8px;border-radius:2px;background:var(--paint)}
+@keyframes roll{to{transform:translateX(-50%)}}
+
+/* Sécurité */
+.safety{background:var(--night)}
+.safety-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:20px;margin-top:56px}
+.panel{position:relative;background:linear-gradient(180deg,var(--deck),var(--asphalt));border:1px solid var(--line);border-radius:28px;padding:clamp(22px,3vw,36px);display:grid;gap:16px;align-content:start;overflow:hidden}
+.panel > p{color:var(--mute)}
+.p-sos{grid-column:span 5}
+.p-zone{grid-column:span 7}
+.p-prec{grid-column:span 7}
+.p-hazard{grid-column:span 5}
+@media (max-width:980px){.p-sos,.p-zone,.p-prec,.p-hazard{grid-column:1/-1}}
+.status{display:inline-flex;align-items:center;gap:8px;justify-self:start;padding:5px 12px;border-radius:999px;font-size:.85rem;font-weight:600;background:color-mix(in srgb,currentColor 12%,transparent)}
+.status::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}
+.status.live{color:var(--ok)}
+.status.soon{color:var(--paint)}
+
+.sos-demo{display:grid;justify-items:center;gap:14px;padding-block:10px 4px;text-align:center}
+.sos-btn{position:relative;width:180px;height:180px;border-radius:50%;border:none;cursor:pointer;background:radial-gradient(circle at 50% 40%,#FF6B6B,var(--sos) 55%,#9E1F1F);box-shadow:0 0 0 10px color-mix(in srgb,var(--sos) 18%,transparent),0 20px 50px -10px color-mix(in srgb,var(--sos) 70%,transparent);display:grid;place-items:center;color:#fff;transition:transform .15s}
+.sos-btn:hover{transform:scale(1.03)}
+.sos-btn svg.ring{position:absolute;inset:-14px;width:calc(100% + 28px);height:calc(100% + 28px);transform:rotate(-90deg);pointer-events:none}
+.sos-btn .lbl{font:800 2.6rem/1 var(--display);letter-spacing:.04em}
+.sos-btn .sub{display:block;font:600 .8rem/1.2 var(--body);opacity:.85;margin-top:4px}
+.sos-btn.counting{animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 22px color-mix(in srgb,var(--sos) 8%,transparent),0 20px 50px -10px color-mix(in srgb,var(--sos) 70%,transparent)}}
+.sos-msg{min-height:3.2em;color:var(--mute);max-width:26em}
+.sos-cancel{min-height:44px}
+
+.zone-viz{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:center}
+.zone-viz > *{min-width:0}
+@media (max-width:620px){.zone-viz{grid-template-columns:1fr}.zone-viz .phone{justify-self:center}}
+
+.radar{position:relative;width:100%;max-width:340px;aspect-ratio:1;justify-self:center;border-radius:50%;background:radial-gradient(circle,#0A0F1E 0%,#050506 70%);border:1px solid var(--line);overflow:hidden}
+.radar .sweep{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,color-mix(in srgb,var(--signal) 40%,transparent),transparent 60deg);animation:sweep 4s linear infinite}
+@keyframes sweep{to{transform:rotate(360deg)}}
+.radar svg{position:absolute;inset:0;width:100%;height:100%}
+.radar .me{transition:r .5s cubic-bezier(.2,.8,.2,1),opacity .4s}
+.seg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:5px;border-radius:16px;background:var(--night);border:1px solid var(--line)}
+.seg button{min-height:42px;padding:0 4px;font-size:.95rem;border-radius:12px;border:none;background:transparent;color:var(--mute);font-weight:600;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--signal);color:#fff}
+.prec-out{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:var(--mute);font-size:.95rem}
+.prec-out b{color:var(--ink)}
+.prec-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:center}
+.prec-layout > *{min-width:0}
+@media (max-width:620px){.prec-layout{grid-template-columns:1fr}}
+
+.tape{position:absolute;left:-30px;right:-30px;top:22px;transform:rotate(-4deg);height:30px;background:repeating-linear-gradient(-45deg,var(--paint) 0 18px,#000000 18px 36px);display:grid;place-items:center;box-shadow:0 6px 16px -6px #000}
+.tape span{background:#000000;color:var(--paint);font:800 .95rem/1 var(--display);padding:4px 12px;letter-spacing:.06em;text-transform:uppercase}
+.p-hazard{padding-top:78px}
+.signs{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:14px;margin-top:6px}
+.sign{display:grid;justify-items:center;gap:8px;text-align:center;font-size:.88rem;color:var(--mute)}
+.sign svg{width:64px;height:58px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.5))}
+
+/* Écrans : carrousel */
+.screens-sec{overflow-x:hidden;overflow-x:clip;background:radial-gradient(60% 40% at 50% 55%,rgba(47,123,255,.08),transparent 70%),var(--night)}
+.carousel{position:relative;margin-top:56px;overflow:hidden;overflow:clip;overflow-clip-margin:40px;height:clamp(520px,62vw,700px);perspective:1400px;touch-action:pan-y;user-select:none}
+.carousel .item{position:absolute;left:50%;top:0;width:min(300px,62vw);margin-left:calc(min(300px,62vw) / -2);transition:transform .6s cubic-bezier(.2,.8,.2,1),opacity .6s;cursor:pointer}
+.carousel .item .phone{width:100%}
+.carousel .item.cur{cursor:default}
+.carousel .item .phone::after{content:"";position:absolute;inset:0;border-radius:inherit;background:#000000;opacity:.45;transition:opacity .6s;pointer-events:none}
+.carousel .item.cur .phone::after{opacity:0}
+.car-ctrl{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:8px}
+.car-ctrl button.nav-b{width:52px;height:52px;border-radius:50%;border:1px solid var(--line);background:var(--asphalt);cursor:pointer;display:grid;place-items:center}
+.car-ctrl button.nav-b:hover{border-color:var(--glow)}
+.car-ctrl svg{width:22px;height:22px}
+.car-cap{text-align:center;min-width:0;max-width:30em}
+.car-cap b{display:block;font:800 2rem/1 var(--display);text-transform:uppercase}
+.car-cap span{color:var(--mute)}
+.car-cap small{display:block;color:var(--mute);margin-top:4px;font-variant-numeric:tabular-nums}
+.chips{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:26px}
+.chips button{min-height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--mute);cursor:pointer;font-weight:500}
+.chips button[aria-current="true"]{color:var(--ink);border-color:var(--glow);background:color-mix(in srgb,var(--signal) 18%,transparent)}
+
+/* Premium */
+.tiers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;margin-top:56px}
+.tier{border:1px solid var(--line);border-radius:28px;padding:clamp(24px,3vw,40px);display:grid;gap:22px;align-content:start;background:var(--asphalt)}
+.tier h3{font-size:2.4rem;text-transform:uppercase;font-weight:800}
+.tier .price{color:var(--mute)}
+.tier.plus{position:relative;border:1px solid transparent;background:linear-gradient(var(--deck),var(--deck)) padding-box,linear-gradient(135deg,var(--paint),var(--trail) 60%,var(--signal)) border-box;box-shadow:0 30px 80px -40px color-mix(in srgb,var(--paint) 50%,transparent)}
+.tier.plus h3{color:var(--paint)}
+.tier.plus .ic{background:color-mix(in srgb,var(--paint) 16%,transparent);color:var(--paint)}
+@media (max-width:820px){.tiers{grid-template-columns:1fr}}
+
+/* Téléchargement */
+.get{overflow:hidden;text-align:center;background:var(--night)}
+.get::before{content:"";position:absolute;left:50%;top:-10%;width:min(1100px,160vw);height:120%;transform:translateX(-50%);background:conic-gradient(from 160deg at 50% 0%,transparent 0deg,color-mix(in srgb,var(--glow) 22%,transparent) 20deg,color-mix(in srgb,var(--glow) 6%,transparent) 30deg,transparent 40deg);pointer-events:none}
+.get .wrap{position:relative;display:grid;gap:28px;justify-items:center}
+.get h2{font-size:clamp(3.6rem,11vw,9rem);line-height:.84}
+.get .lede{margin-inline:auto}
+.get .ctas{justify-content:center;margin-top:8px}
+.store{display:inline-flex;align-items:center;gap:12px;height:60px;min-width:212px;padding:0 22px 0 18px;border-radius:12px;background:#000;color:#fff;border:1px solid #A6A6A6;text-decoration:none;transition:border-color .2s,background .2s,transform .2s}.store:hover{border-color:#fff;background:#0B0B0D;transform:translateY(-2px)}.store:focus-visible{outline:2px solid var(--glow);outline-offset:3px}.store svg{width:28px;height:28px;flex:none}.store svg.gp{width:25px;height:28px}.store span{display:grid;text-align:left;line-height:1;gap:3px}.store small{font:500 .68rem/1 var(--body);letter-spacing:.06em;text-transform:uppercase;color:#D6D6D6}.store b{font:600 1.42rem/1 var(--body);letter-spacing:-.01em;color:#fff}
+
+/* Pied de page */
+footer{border-top:1px solid var(--line);padding-block:56px 110px;color:var(--mute);font-size:.95rem;background:var(--asphalt)}
+footer .wrap{display:grid;gap:30px}
+.foot-row{display:flex;flex-wrap:wrap;gap:16px 28px;align-items:center;justify-content:space-between}
+.foot-links{display:flex;flex-wrap:wrap;gap:10px 22px}
+footer a{text-decoration:none}
+footer a:hover{color:var(--ink)}
+.motto{font:800 italic 1.4rem/1 var(--display);color:var(--ink);text-transform:uppercase}
+
+
+/* ===== Ajouts : contenu enrichi ===== */
+.hero-meta{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;margin-top:26px;color:var(--mute);font-size:.95rem}
+.badge-new{display:inline-flex;align-items:center;gap:8px;padding:6px 12px 6px 6px;border-radius:999px;background:color-mix(in srgb,var(--signal) 16%,transparent);border:1px solid color-mix(in srgb,var(--signal) 40%,transparent);color:var(--ink);text-decoration:none;font-weight:500}
+.badge-new b{background:var(--signal);color:#fff;border-radius:999px;padding:3px 9px;font:700 .8rem/1.2 var(--body)}
+.badge-new:hover{border-color:var(--glow)}
+.hero-meta span{display:inline-flex;align-items:center;gap:7px}
+.hero-meta svg{width:16px;height:16px;color:var(--glow)}
+
+.sec-lead{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:clamp(24px,5vw,80px);align-items:end}
+.sec-lead > *{min-width:0}
+@media (max-width:900px){.sec-lead{grid-template-columns:1fr}}
+
+/* Navigation */
+.nav-stage{position:relative;display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(32px,6vw,90px);align-items:center;margin-top:64px}
+.nav-stage > *{min-width:0}
+.nav-phone{position:relative;justify-self:center}
+.turn-card{position:absolute;left:-18%;top:44%;z-index:2;display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;padding:12px 18px 12px 12px;border-radius:20px;background:#07122A;border:1px solid color-mix(in srgb,var(--signal) 45%,transparent);box-shadow:0 24px 50px -18px #000;min-width:0;max-width:280px}
+.turn-card .arrow{width:52px;height:52px;border-radius:15px;background:var(--signal);display:grid;place-items:center}
+.turn-card .arrow svg{width:30px;height:30px}
+.turn-card b{display:block;font:800 1.8rem/1 var(--display)}
+.turn-card span{color:var(--mute);font-size:.9rem}
+.voice{position:absolute;right:-14%;bottom:16%;z-index:2;display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:999px;background:var(--deck);border:1px solid var(--line);box-shadow:0 20px 40px -18px #000;font-size:.92rem}
+.voice .wave{display:flex;gap:3px;align-items:center;height:18px}
+.voice .wave i{width:3px;border-radius:2px;background:var(--glow);animation:wave 1s ease-in-out infinite}
+.voice .wave i:nth-child(1){height:6px;animation-delay:-.2s}.voice .wave i:nth-child(2){height:14px;animation-delay:-.5s}.voice .wave i:nth-child(3){height:18px;animation-delay:-.1s}.voice .wave i:nth-child(4){height:10px;animation-delay:-.7s}.voice .wave i:nth-child(5){height:15px;animation-delay:-.35s}
+@keyframes wave{50%{transform:scaleY(.4)}}
+@media (max-width:900px){.nav-stage{grid-template-columns:1fr}.turn-card{left:-6%;top:44%}.voice{right:-4%}}
+@media (max-width:480px){.turn-card{left:-2%;padding:10px 14px 10px 10px}.turn-card .arrow{width:44px;height:44px}.turn-card b{font-size:1.5rem}.voice{right:0}}
+
+.feat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.feat{display:grid;gap:10px;align-content:start;padding:22px;border-radius:22px;background:var(--asphalt);border:1px solid var(--line)}
+.feat.wide{grid-column:1/-1}
+.feat .fi{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--signal) 16%,transparent);color:var(--glow)}
+.feat .fi svg{width:22px;height:22px}
+.feat h3{font-size:1.4rem}
+.feat p{color:var(--mute);font-size:.98rem;line-height:1.5}
+.pumps{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.pump{padding:4px 10px;border-radius:8px;font:700 .9rem/1.2 var(--display);letter-spacing:.02em;border:1px solid var(--line);background:var(--night)}
+.pump.e{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,transparent)}
+@media (max-width:620px){.feat-grid{grid-template-columns:1fr}}
+
+/* Croisement : types */
+.xtypes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.xtype{padding:14px;border-radius:16px;background:var(--asphalt);border:1px solid var(--line);display:grid;gap:4px}
+.xtype b{font:800 1.25rem/1.05 var(--display);text-transform:uppercase}
+.xtype span{color:var(--mute);font-size:.9rem;line-height:1.4}
+@media (max-width:620px){.xtypes{grid-template-columns:1fr}}
+.fine{color:var(--mute);font-size:.92rem;line-height:1.5}
+.fine b{color:var(--ink);font-weight:600}
+
+/* Communauté : bento */
+.bento{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:18px;margin-top:56px}
+.tile{position:relative;overflow:hidden;border-radius:28px;background:linear-gradient(180deg,var(--deck),var(--asphalt));border:1px solid var(--line);padding:clamp(22px,3vw,34px);display:grid;gap:14px;align-content:start;min-width:0}
+.tile > p{color:var(--mute)}
+.t-match{grid-column:span 5}
+.t-chat{grid-column:span 7}
+.t-events{grid-column:span 7}
+.t-groups{grid-column:span 5}
+@media (max-width:980px){.t-match,.t-chat,.t-events,.t-groups{grid-column:1/-1}}
+.tile .tag{justify-self:start;padding:4px 10px;border-radius:999px;font-size:.8rem;font-weight:600;color:var(--paint);background:color-mix(in srgb,var(--paint) 14%,transparent)}
+
+.swipe{position:relative;height:210px;margin-top:6px}
+.scard{position:absolute;inset:0 12% 0 12%;border-radius:22px;padding:18px;display:grid;align-content:end;gap:10px;background:linear-gradient(160deg,#182A55,#0E1016 70%);border:1px solid color-mix(in srgb,var(--ink) 12%,transparent);box-shadow:0 20px 40px -20px #000}
+.scard.back{transform:rotate(-7deg) translateX(-8%);opacity:.5}
+.scard.mid{transform:rotate(4deg) translateX(6%);opacity:.75}
+.scard .bike{position:absolute;top:18px;left:18px;right:18px;height:78px;opacity:.9}
+.scard b{font:800 1.5rem/1 var(--display)}
+.crit{display:flex;flex-wrap:wrap;gap:6px}
+.crit span{padding:4px 10px;border-radius:999px;font-size:.8rem;background:color-mix(in srgb,var(--night) 70%,transparent);border:1px solid var(--line)}
+.swipe-acts{display:flex;justify-content:center;gap:14px}
+.swipe-acts span{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:var(--night);border:1px solid var(--line)}
+.swipe-acts svg{width:20px;height:20px}
+
+.chat-demo{display:grid;gap:10px;padding:16px;border-radius:20px;background:var(--night);border:1px solid var(--line)}
+.bub{max-width:82%;padding:10px 14px;border-radius:18px;font-size:.95rem;line-height:1.4}
+.bub.in{background:var(--deck);border-bottom-left-radius:6px;justify-self:start}
+.bub.out{background:var(--signal);color:#fff;border-bottom-right-radius:6px;justify-self:end}
+.bub.vocal{display:flex;align-items:center;gap:10px}
+.bub.vocal .play{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.2);display:grid;place-items:center;flex:none}
+.bub.vocal .play svg{width:12px;height:12px}
+.bars{display:flex;gap:2px;align-items:center;height:22px}
+.bars i{width:3px;border-radius:2px;background:currentColor;opacity:.85}
+.chat-pills{display:flex;flex-wrap:wrap;gap:8px}
+.chat-pills span{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:12px;background:var(--asphalt);border:1px solid var(--line);font-size:.9rem}
+.chat-pills b{color:var(--ink);font-weight:600}
+.chat-pills svg{width:16px;height:16px;color:var(--glow)}
+
+.ev-layout{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:22px;align-items:center}
+.ev-layout > *{min-width:0}
+@media (max-width:620px){.ev-layout{grid-template-columns:1fr}.ev-layout .phone{justify-self:center}}
+
+.invite{display:grid;gap:10px;padding:16px;border-radius:20px;background:var(--night);border:1px solid var(--line)}
+.invite .link{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:var(--asphalt);border:1px dashed color-mix(in srgb,var(--glow) 50%,transparent);font-size:.9rem;color:var(--mute);min-width:0}
+.invite .link svg{width:18px;height:18px;color:var(--glow);flex:none}
+.invite .link span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.opts{display:flex;flex-wrap:wrap;gap:6px}
+.opts span{padding:5px 10px;border-radius:999px;font-size:.82rem;border:1px solid var(--line);color:var(--mute)}
+.opts span.on{color:var(--ink);border-color:var(--glow);background:color-mix(in srgb,var(--signal) 18%,transparent)}
+
+/* Sécurité : partage de position */
+.p-share{grid-column:span 5}
+@media (max-width:980px){.p-share{grid-column:1/-1}}
+.share-card{display:grid;gap:12px;padding:16px;border-radius:20px;background:var(--night);border:1px solid var(--line)}
+.share-top{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:.9rem;color:var(--mute)}
+.share-top b{color:var(--ink)}
+.live-dot{display:inline-flex;align-items:center;gap:6px;color:var(--ok);font-weight:600}
+.live-dot::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 0 0 currentColor;animation:ping 1.6s infinite}
+@keyframes ping{70%{box-shadow:0 0 0 8px transparent}}
+.share-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.share-stats div{padding:10px;border-radius:12px;background:var(--asphalt);display:grid;gap:2px}
+.share-stats span{font-size:.78rem;color:var(--mute)}
+.share-stats b{font:700 1.3rem/1 var(--display)}
+.pin{display:flex;gap:6px}
+.pin span{width:30px;height:36px;border-radius:8px;display:grid;place-items:center;background:var(--asphalt);border:1px solid var(--line);font:700 1.2rem/1 var(--display)}
+
+/* Ce que l'app ne fait pas */
+.honest{margin-top:22px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:22px;align-items:start;padding:clamp(22px,3vw,34px);border-radius:28px;border:1px solid color-mix(in srgb,var(--paint) 35%,transparent);background:repeating-linear-gradient(-45deg,color-mix(in srgb,var(--paint) 5%,transparent) 0 14px,transparent 14px 28px),var(--asphalt)}
+.honest .hi{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;background:color-mix(in srgb,var(--paint) 18%,transparent);color:var(--paint)}
+.honest .hi svg{width:28px;height:28px}
+.honest h3{margin-bottom:12px}
+.honest ul{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.honest li{display:grid;gap:4px;color:var(--mute);font-size:.95rem;line-height:1.45}
+.honest li b{color:var(--ink);font-weight:600}
+@media (max-width:900px){.honest{grid-template-columns:1fr}.honest ul{grid-template-columns:1fr}}
+
+/* Confiance */
+.trust{background:var(--asphalt);border-block:1px solid var(--line)}
+.pledges{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin-top:56px;border-top:1px solid var(--line)}
+.pledge{display:grid;gap:12px;align-content:start;padding:28px 24px 8px 0}
+.pledge + .pledge{padding-left:24px;border-left:1px solid var(--line)}
+.pledge b{font:800 clamp(2.4rem,4vw,3.4rem)/.9 var(--display);text-transform:uppercase}
+.pledge b small{display:block;font-size:.45em;color:var(--mute);letter-spacing:.01em;margin-top:6px}
+.pledge p{color:var(--mute);font-size:.98rem;line-height:1.5}
+@media (max-width:900px){.pledges{grid-template-columns:repeat(2,minmax(0,1fr))}.pledge:nth-child(3){padding-left:0;border-left:none}.pledge:nth-child(n+3){border-top:1px solid var(--line)}}
+@media (max-width:520px){.pledges{grid-template-columns:1fr}.pledge + .pledge{padding-left:0;border-left:none;border-top:1px solid var(--line)}}
+
+/* Nouveautés */
+.release{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);gap:clamp(28px,5vw,70px);margin-top:56px;align-items:start}
+.release > *{min-width:0}
+@media (max-width:900px){.release{grid-template-columns:1fr}}
+.current{position:relative;border-radius:30px;padding:clamp(24px,3vw,38px);display:grid;gap:18px;border:1px solid transparent;background:linear-gradient(var(--deck),var(--deck)) padding-box,linear-gradient(135deg,var(--signal),var(--trail)) border-box;box-shadow:0 30px 80px -40px color-mix(in srgb,var(--signal) 70%,transparent)}
+.current .ver{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.current .ver b{font:800 clamp(3.4rem,7vw,5.2rem)/.85 var(--display)}
+.current .ver span{color:var(--mute)}
+.current ul{margin:0;padding:0;list-style:none;display:grid;gap:14px}
+.current li{display:grid;grid-template-columns:28px 1fr;gap:10px}
+.current li svg{width:22px;height:22px;color:var(--glow);margin-top:2px}
+.current li b{display:block;font-weight:600}
+.current li span{color:var(--mute);font-size:.95rem}
+.timeline{list-style:none;margin:0;padding:0;position:relative;display:grid;gap:4px}
+.timeline::before{content:"";position:absolute;left:11px;top:8px;bottom:8px;width:2px;background:repeating-linear-gradient(180deg,var(--paint) 0 10px,transparent 10px 18px);opacity:.6}
+.timeline li{position:relative;display:grid;grid-template-columns:24px minmax(0,1fr);gap:18px;padding:12px 0}
+.timeline .dot{width:24px;height:24px;border-radius:50%;background:var(--night);border:2px solid var(--paint);margin-top:2px;position:relative;z-index:1}
+.timeline .head2{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.timeline .head2 b{font:800 1.5rem/1 var(--display)}
+.timeline .head2 time{color:var(--mute);font-size:.9rem}
+.timeline p{color:var(--mute);font-size:.97rem;line-height:1.5;margin-top:4px}
+
+/* Premium : comparatif */
+.prem-layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr);gap:22px;margin-top:56px;align-items:start}
+.prem-layout > *{min-width:0}
+@media (max-width:980px){.prem-layout{grid-template-columns:1fr}}
+.cmp-wrap{overflow-x:auto;border-radius:28px;border:1px solid var(--line);background:var(--asphalt)}
+.cmp{width:100%;border-collapse:collapse;font-size:.98rem;min-width:520px}
+.cmp th,.cmp td{padding:14px 20px;text-align:left;border-bottom:1px solid var(--line)}
+.cmp thead th{font:800 1.3rem/1 var(--display);text-transform:uppercase;padding-block:22px;background:var(--deck)}
+.cmp thead th:last-child{color:var(--paint)}
+.cmp td:not(:first-child),.cmp th:not(:first-child){text-align:center;width:22%}
+.cmp tbody tr:last-child td{border-bottom:none}
+.cmp tbody tr.grp td{font-weight:600;color:var(--mute);font-size:.85rem;padding-block:10px;background:color-mix(in srgb,var(--night) 50%,transparent)}
+.cmp td:last-child{background:color-mix(in srgb,var(--paint) 5%,transparent)}
+.cmp .y{color:var(--ok)}
+.cmp .n{color:color-mix(in srgb,var(--mute) 60%,transparent)}
+.cmp svg{width:20px;height:20px;vertical-align:middle}
+.prices{display:grid;gap:14px}
+.price-card{border-radius:24px;padding:24px;display:grid;gap:6px;background:var(--asphalt);border:1px solid var(--line)}
+.price-card.best{border:1px solid transparent;background:linear-gradient(var(--deck),var(--deck)) padding-box,linear-gradient(135deg,var(--paint),var(--trail) 60%,var(--signal)) border-box}
+.price-card .pl{display:flex;justify-content:space-between;align-items:center;gap:10px;color:var(--mute);font-weight:600}
+.price-card .pl em{font-style:normal;font-size:.8rem;color:#000000;background:var(--paint);padding:3px 9px;border-radius:999px}
+.price-card b{font:800 3rem/1 var(--display)}
+.price-card b small{font:500 1rem/1 var(--body);color:var(--mute);margin-left:6px}
+.price-card span{color:var(--mute);font-size:.92rem}
+.price-note{color:var(--mute);font-size:.9rem;line-height:1.5;padding-inline:4px}
+@media (max-width:620px){.cmp{min-width:0;font-size:.9rem}.cmp th,.cmp td{padding:12px 10px}.cmp thead th{font-size:1rem;padding-block:16px}.cmp td:not(:first-child),.cmp th:not(:first-child){width:24%}}
+@media (max-width:620px){.gps{padding:6px 14px 6px 6px;gap:10px}.gps .turn{width:40px;height:40px}.gps .dist{font-size:1.25rem}}
+
+/* Écran GPS de la simulation */
+.gps-ui{position:absolute;z-index:2;top:124px;bottom:150px;left:55%;right:var(--gutter);pointer-events:none}
+.gps-ui > *{pointer-events:auto}
+.g-top{display:flex;gap:10px;align-items:stretch}
+.g-banner{display:flex;gap:14px;align-items:center;padding:12px 18px 12px 12px;border-radius:22px;background:#07122A;border:1px solid rgba(47,123,255,.5);box-shadow:0 24px 50px -20px #000;min-width:0;flex:1 1 auto}
+.g-banner > div{min-width:0}
+.g-arrow{position:relative;width:62px;height:62px;border-radius:17px;background:var(--signal);display:grid;place-items:center;flex:none}
+.g-arrow svg{width:36px;height:36px}
+.g-arrow i{position:absolute;right:-7px;top:-7px;min-width:22px;height:22px;border-radius:999px;background:#fff;color:#07122A;font:800 .85rem/22px var(--display);text-align:center;font-style:normal}
+.g-banner b{display:block;font:800 2.1rem/1 var(--display)}
+.g-banner span{display:block;font-weight:600;font-size:1rem;line-height:1.2;margin-top:3px}
+.g-banner small{display:block;color:var(--mute);font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.g-eta{flex:none;display:grid;align-content:center;gap:2px;padding:10px 16px;border-radius:22px;background:rgba(10,10,12,.9);border:1px solid var(--line);text-align:right;max-width:210px}
+.g-eta b{font:800 1.8rem/1 var(--display);color:var(--ok)}
+.g-eta span{font-size:.88rem;color:var(--ink)}
+.g-eta small{font-size:.8rem;color:var(--paint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.g-side{position:absolute;right:0;top:46%;transform:translateY(-50%);display:grid;gap:10px}
+.g-btn{position:relative;width:52px;height:52px;border-radius:16px;background:rgba(10,10,12,.94);border:1px solid var(--line);display:grid;place-items:center;cursor:pointer;color:var(--ink);box-shadow:0 12px 30px -14px #000;padding:0}
+.g-btn:hover{border-color:var(--glow)}
+.g-btn svg{width:22px;height:22px}
+.g-btn.sos{background:var(--sos);border-color:transparent;font:800 1rem/1 var(--display);letter-spacing:.04em;color:#fff}
+.g-btn[aria-pressed="true"]{color:var(--glow)}
+.g-btn em{position:absolute;right:-6px;top:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--trail);color:#fff;font:700 .75rem/20px var(--body);font-style:normal}
+.g-tip{position:absolute;right:62px;top:50%;transform:translateY(-50%);white-space:nowrap;font-size:.8rem;padding:4px 9px;border-radius:8px;background:rgba(0,0,0,.9);color:var(--ink);opacity:0;pointer-events:none;transition:opacity .2s}
+.g-btn:hover .g-tip,.g-btn:focus-visible .g-tip{opacity:1}
+.g-limit{position:absolute;left:0;bottom:0;width:58px;height:58px;border-radius:50%;background:#fff;border:6px solid var(--sos);display:grid;place-items:center;font:800 1.45rem/1 var(--display);color:#111;box-shadow:0 10px 24px -10px #000}
+.g-voice{position:absolute;left:0;top:96px;max-width:min(380px,100%);padding:9px 14px;border-radius:14px;background:rgba(0,0,0,.88);border:1px solid var(--line);font-size:.95rem;font-style:italic;color:var(--ink);opacity:0;transform:translateY(-6px);transition:opacity .3s,transform .3s}
+.g-voice.on{opacity:1;transform:none}
+.g-toast{position:absolute;left:0;right:66px;bottom:74px;padding:12px 14px;border-radius:16px;background:rgba(7,18,42,.96);border:1px solid rgba(47,123,255,.5);font-size:.92rem;line-height:1.45;color:var(--mute);opacity:0;transform:translateY(8px);transition:opacity .3s,transform .3s;pointer-events:none}
+.g-toast.on{opacity:1;transform:none;pointer-events:auto}
+.g-toast b{color:var(--ink);font-weight:600}
+.g-toast a{color:var(--glow)}
+.g-cur{position:absolute;z-index:2;transform:translateX(-50%);padding:6px 14px;border-radius:999px;background:rgba(7,18,42,.92);border:1px solid var(--line);font-weight:600;font-size:.92rem;white-space:nowrap;pointer-events:none}
+@media (max-width:900px){
+  .gps-ui{top:auto;left:var(--gutter);right:var(--gutter);bottom:140px;height:380px}
+  .g-eta{display:none}
+  .g-side{top:auto;bottom:70px;transform:none}
+  .g-side .g-btn:nth-child(n+3){display:none}
+  .g-arrow{width:50px;height:50px}.g-arrow svg{width:30px;height:30px}
+  .g-banner{padding:10px 14px 10px 10px}.g-banner b{font-size:1.7rem}
+  .g-limit{width:48px;height:48px;font-size:1.2rem;border-width:5px}
+  .g-voice{top:84px}
+  .g-toast{bottom:64px;right:62px}
+}
+
+/* Organisation épurée */
+.band-tight{padding-block:clamp(64px,8vw,110px)}
+.sub-h{font-size:clamp(2rem,3.6vw,2.9rem);text-transform:uppercase;font-weight:800;line-height:.95}
+.xblock{margin-top:64px;padding:clamp(24px,4vw,48px);border-radius:32px;background:color-mix(in srgb,var(--asphalt) 70%,transparent);border:1px solid var(--line)}
+.p-vis{grid-column:span 7}
+.p-share{grid-column:1/-1}
+.share-layout{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:28px;align-items:center}
+.share-layout > *{min-width:0}
+@media (max-width:980px){.p-vis{grid-column:1/-1}}
+@media (max-width:720px){.share-layout{grid-template-columns:1fr}}
+.trust-inline{margin-top:64px}
+.trust-inline .pledges{margin-top:24px}
+.older summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:10px;padding:10px 16px;border-radius:999px;border:1px solid var(--line);color:var(--mute);font-weight:600}
+.older summary::-webkit-details-marker{display:none}
+.older summary::after{content:"+";font:700 1.2rem/1 var(--body);color:var(--glow)}
+.older[open] summary::after{content:"–"}
+.older[open] summary{margin-bottom:12px}
+.faq-layout{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:clamp(28px,6vw,90px);align-items:start}
+.faq-layout > *{min-width:0}
+.faq-layout .lede a{color:var(--glow)}
+@media (max-width:900px){.faq-layout{grid-template-columns:1fr}}
+.faq{display:grid;border-top:1px solid var(--line)}
+.faq details{border-bottom:1px solid var(--line)}
+.faq summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 4px;font-weight:600;font-size:1.1rem}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line);color:var(--glow);font-weight:600}
+.faq details[open] summary::after{content:"–"}
+.faq details p{padding:0 4px 22px;color:var(--mute);max-width:62ch}
+
+.release{grid-template-columns:1fr;gap:18px;margin-top:44px}
+.current ul{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:32px}
+.current .ver{justify-content:space-between}
+@media (max-width:760px){.current ul{grid-template-columns:1fr}}
+.older .timeline{max-width:760px}
+
+.cross-phone-wrap{display:grid;justify-items:center}
+.cross-phone-wrap .phone{width:min(300px,72vw)}
+/* Lisibilité des écrans de l'application (thème sombre sur fond sombre) */
+.phone{background:linear-gradient(150deg,#5D6370 0%,#24272E 18%,#101114 50%,#24272E 82%,#5D6370 100%);box-shadow:0 0 0 1px rgba(255,255,255,.22),0 0 60px -6px rgba(111,166,255,.45),0 40px 90px -30px rgba(0,0,0,.9)}
+.phone img{box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);background:#0A0A0C}
+.phone::before{background:#000000}
+.nav-phone,.cross-phone-wrap,.ev-layout .phone,.carousel{position:relative}
+.nav-phone::after,.cross-phone-wrap::after{content:"";position:absolute;inset:6% -12%;z-index:-1;border-radius:50%;background:radial-gradient(closest-side,rgba(47,123,255,.35),transparent);pointer-events:none}
+.carousel .item .phone::after{opacity:.18}
+.carousel .item.cur .phone{box-shadow:0 0 0 1px rgba(255,255,255,.3),0 0 90px -4px rgba(111,166,255,.6),0 40px 90px -30px rgba(0,0,0,.9)}
+
+/* ===== Direction plus sobre et premium ===== */
+:root{--r-lg:16px;--r-md:12px;--r-sm:8px}
+h1,h2,h3{letter-spacing:-.02em}
+h2,.sub-h,.get h2,.tier h3,.car-cap b{text-transform:none;font-family:var(--body);font-weight:600}
+h2{font-size:clamp(2.1rem,4vw,3.3rem);line-height:1.06}
+.sub-h{font-size:clamp(1.7rem,2.8vw,2.3rem);line-height:1.1}
+h3{font-family:var(--body);font-weight:600;font-size:1.3rem;letter-spacing:-.01em}
+.hero h1{font-family:var(--body);text-transform:none;font-weight:700;font-size:clamp(3rem,6.4vw,5.6rem);line-height:.98;letter-spacing:-.035em}
+.hero h1 .l2{font-style:normal;color:var(--mute);-webkit-text-stroke:0;padding-left:0;font-weight:600}
+.get h2{font-size:clamp(2.6rem,6vw,4.6rem);line-height:1}
+.kicker{font:600 .82rem/1 var(--body);color:var(--mute);letter-spacing:.08em;text-transform:uppercase;gap:12px}
+.kicker svg{display:none}
+.kicker::before{content:"";width:28px;height:1px;background:var(--glow)}
+.btn{border-radius:var(--r-md);min-height:50px}
+.top .btn{border-radius:10px}
+.btn-primary{box-shadow:none}
+.panel,.tile,.tier,.price-card,.feat,.xblock,.cmp-wrap,.current,.share-card,.chat-demo,.invite,.g-banner,.g-eta,.cluster{border-radius:var(--r-lg)}
+.xtype,.entry,.g-btn{border-radius:var(--r-md)}
+.seg,.seg button{border-radius:10px}
+.chips button,.badge-new,.status,.tile .tag,.sim-tag,.g-cur,.nav-toast{border-radius:var(--r-sm)}
+.feat .fi,.checks .ic{border-radius:8px}
+.checks .ic{background:transparent;color:var(--glow);width:22px;height:22px}
+.checks li{grid-template-columns:22px 1fr}
+.tier.plus,.current,.price-card.best{background:var(--deck);border:1px solid color-mix(in srgb,var(--glow) 45%,transparent);box-shadow:none}
+.tier.plus h3{color:var(--ink)}
+.tier.plus .ic{background:transparent;color:var(--glow)}
+.price-card .pl em{background:var(--glow);color:#000000}
+.tile .tag{color:var(--mute);background:transparent;border:1px solid var(--line)}
+.tile-shot{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:22px;align-items:start}
+.tile-shot > *{min-width:0}
+.tile-shot .phone{width:min(190px,40vw)}
+.tile-p{color:var(--mute)}
+@media (max-width:620px){.tile-shot{grid-template-columns:1fr}.tile-shot .phone{justify-self:center;width:min(220px,64vw)}}
+.t-match{grid-column:span 6}.t-chat{grid-column:span 6}
+@media (max-width:980px){.t-match,.t-chat{grid-column:1/-1}}
+/* SOS plus sobre */
+.sos-btn{width:150px;height:150px;background:var(--sos);box-shadow:0 0 0 8px color-mix(in srgb,var(--sos) 14%,transparent)}
+.sos-btn .lbl{font:700 2rem/1 var(--body);letter-spacing:.02em}
+.sos-btn.counting{animation:none}
+.sos-btn:hover{transform:none;filter:brightness(1.06)}
+/* Moins de jaune : accent unique bleu */
+.nav a.here::after{background:var(--glow)}
+.status.soon{color:var(--mute)}
+.timeline::before{background:var(--line);opacity:1}
+.timeline .dot{border-color:var(--glow)}
+.radar .sweep{background:conic-gradient(from 0deg,color-mix(in srgb,var(--signal) 22%,transparent),transparent 50deg)}
+.pledge b{font-family:var(--body);font-weight:600;text-transform:none;letter-spacing:-.03em}
+.pledge b small{text-transform:none;font-weight:500}
+.car-cap b{font-size:1.4rem}
+.motto{font-family:var(--body);font-style:normal;text-transform:none;font-weight:600;font-size:1rem;color:var(--mute)}
+.brand{font-family:var(--body);font-weight:700;font-size:1.3rem;letter-spacing:-.01em}
+.gauge .spd,.readout b,.g-banner b,.g-eta b,.current .ver b,.price-card b,.timeline .head2 b,.xtype b,.share-stats b{font-family:var(--body);font-weight:600;letter-spacing:-.02em}
+.xtype b{text-transform:none;font-size:1.05rem}
+
+/* Loupe sur les écrans de l'application */
+.zoomable{cursor:zoom-in}
+.zoom-peek{position:fixed;z-index:70;top:50%;left:0;height:min(58vh,600px);aspect-ratio:540/1104;border-radius:28px;padding:9px;background:linear-gradient(150deg,#5D6370 0%,#24272E 18%,#101114 50%,#24272E 82%,#5D6370 100%);box-shadow:0 0 0 1px rgba(255,255,255,.25),0 30px 90px -10px rgba(0,0,0,.85),0 0 80px -10px rgba(111,166,255,.45);opacity:0;transform:translateY(-50%) scale(.94);transition:opacity .18s ease,transform .18s ease;pointer-events:none}
+.zoom-peek.on{opacity:1;transform:translateY(-50%) scale(1)}
+.zoom-peek img{width:100%;height:100%;object-fit:cover;border-radius:20px;background:#0A0A0C;display:block}
+.zoom-peek figcaption{position:absolute;left:0;right:0;top:calc(100% + 10px);text-align:center;font-size:.9rem;color:var(--ink);text-shadow:0 1px 6px #000}
+.zoom-box{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:24px 16px;background:rgba(0,0,0,.9)}
+.zoom-box[hidden]{display:none}
+.zoom-box figure{margin:0;display:grid;gap:12px;justify-items:center;max-height:100%}
+.zoom-box img{max-height:min(calc(100vh - 120px),720px);max-width:100%;width:auto;border-radius:22px;box-shadow:0 0 0 1px rgba(255,255,255,.2),0 30px 90px -10px #000}
+.zoom-box figcaption{color:var(--ink);font-size:.95rem;text-align:center;max-width:32em}
+.zoom-close{position:fixed;top:calc(16px + env(safe-area-inset-top,0px));right:16px;width:48px;height:48px;border-radius:12px;border:1px solid var(--line);background:var(--asphalt);color:var(--ink);font-size:1.5rem;cursor:pointer}
+@media (prefers-reduced-motion:reduce){.zoom-peek{transition:none}}
+
+/* ===== Ouverture : la route se trace, la marque apparaît, l'écran se lève ===== */
+.intro{position:fixed;inset:0;z-index:200;background:#000;display:grid;place-items:center;overflow:hidden;
+  animation:introOut .9s cubic-bezier(.77,0,.18,1) 2.45s forwards}
+.intro-road{position:absolute;inset:0;width:100%;height:100%}
+.intro-road .halo{fill:none;stroke:rgba(47,123,255,.22);stroke-width:14;stroke-linecap:round;filter:blur(6px)}
+.intro-road .line{fill:none;stroke:url(#introGrad);stroke-width:2.5;stroke-linecap:round}
+.intro-road .halo,.intro-road .line{stroke-dasharray:1;stroke-dashoffset:1;animation:introDraw 1.6s cubic-bezier(.65,0,.25,1) .15s forwards}
+.intro-dot{position:absolute;left:0;top:0;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:#fff;
+  box-shadow:0 0 0 4px rgba(111,166,255,.35),0 0 28px 8px rgba(47,123,255,.7);offset-rotate:0deg;offset-distance:0%;opacity:0;
+  animation:introDot 1.6s cubic-bezier(.65,0,.25,1) .15s forwards}
+.intro-center{position:relative;display:grid;justify-items:center;gap:18px;text-align:center}
+.intro-mark{display:flex;align-items:center;gap:16px}
+.intro-mark img{width:64px;height:64px;border-radius:50%;opacity:0;transform:scale(.7);box-shadow:0 0 0 1px rgba(255,255,255,.18),0 0 40px rgba(47,123,255,.45);
+  animation:introLogo .7s cubic-bezier(.2,.9,.2,1) .7s forwards}
+.intro-word{font:700 clamp(2.4rem,6vw,3.6rem)/1 var(--body);letter-spacing:-.03em;color:#F3F5F9;clip-path:inset(0 100% 0 0);
+  animation:introWipe .8s cubic-bezier(.65,0,.25,1) .95s forwards}
+.intro-word b{color:var(--glow)}
+.intro-tag{font:500 .85rem/1 var(--body);letter-spacing:.42em;text-transform:uppercase;color:var(--mute);opacity:0;padding-left:.42em;
+  animation:introTag .9s ease 1.45s forwards}
+.intro-bar{position:absolute;left:50%;bottom:calc(48px + env(safe-area-inset-bottom,0px));width:140px;height:2px;margin-left:-70px;background:var(--line);overflow:hidden;border-radius:2px}
+.intro-bar::after{content:"";position:absolute;inset:0;background:var(--glow);transform:scaleX(0);transform-origin:left;animation:introBar 2.3s linear forwards}
+.intro-skip{position:absolute;right:20px;top:calc(18px + env(safe-area-inset-top,0px));font:500 .85rem/1 var(--body);color:var(--mute);background:none;border:1px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer}
+.intro-skip:hover{color:var(--ink);border-color:var(--glow)}
+.intro.out{animation:introOut .6s cubic-bezier(.77,0,.18,1) forwards}
+@keyframes introDraw{to{stroke-dashoffset:0}}
+@keyframes introDot{0%{opacity:0;offset-distance:0%}8%{opacity:1}92%{opacity:1}100%{opacity:0;offset-distance:100%}}
+@keyframes introLogo{to{opacity:1;transform:none}}
+@keyframes introWipe{to{clip-path:inset(0 0 0 0)}}
+@keyframes introTag{from{opacity:0;letter-spacing:.7em}to{opacity:1;letter-spacing:.42em}}
+@keyframes introBar{to{transform:scaleX(1)}}
+@keyframes introOut{0%{clip-path:inset(0 0 0 0)}99%{clip-path:inset(0 0 100% 0)}100%{clip-path:inset(0 0 100% 0);visibility:hidden}}
+/* Arrivée de la page, uniquement après l'ouverture */
+.intro-on .hero h1,.intro-on .hero .lede,.intro-on .hero .ctas,.intro-on .hero-meta,.intro-on .cluster,.intro-on .gps-ui,.intro-on .top{
+  opacity:0;transform:translateY(26px);animation:heroIn .9s cubic-bezier(.2,.8,.2,1) forwards}
+.intro-on .top{transform:translateY(-12px);animation-delay:2.75s}
+.intro-on .hero h1{animation-delay:2.6s}
+.intro-on .hero .lede{animation-delay:2.72s}
+.intro-on .hero .ctas{animation-delay:2.82s}
+.intro-on .hero-meta{animation-delay:2.9s}
+.intro-on .gps-ui{animation-delay:2.95s}
+.intro-on .cluster{animation-delay:3.05s}
+.intro-on.intro-fast .top,.intro-on.intro-fast .hero h1,.intro-on.intro-fast .hero .lede,.intro-on.intro-fast .hero .ctas,.intro-on.intro-fast .hero-meta,.intro-on.intro-fast .gps-ui,.intro-on.intro-fast .cluster{animation-delay:.25s}
+@keyframes heroIn{to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.intro{display:none}.intro-on *{animation:none!important;opacity:1!important;transform:none!important}}
+
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<div class="intro" id="intro" aria-hidden="true">
+  <svg class="intro-road" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice">
+    <defs><linearGradient id="introGrad" x1="0" x2="1"><stop offset="0" stop-color="#2F7BFF" stop-opacity=".2"/><stop offset=".55" stop-color="#2F7BFF"/><stop offset="1" stop-color="#A9C8FF"/></linearGradient></defs>
+    <path class="halo" pathLength="1" d="M-60 610 C 180 600, 260 470, 420 455 S 640 520, 760 400 S 900 170, 1060 150 S 1220 120, 1270 95"/>
+    <path class="line" pathLength="1" d="M-60 610 C 180 600, 260 470, 420 455 S 640 520, 760 400 S 900 170, 1060 150 S 1220 120, 1270 95"/>
+  </svg>
+  <span class="intro-dot" id="introDot"></span>
+  <div class="intro-center">
+    <div class="intro-mark"><img src="assets/img/logo.png" alt="" width="64" height="64"><span class="intro-word">Izen<b>Ride</b></span></div>
+    <div class="intro-tag">Le cockpit moto</div>
+  </div>
+  <div class="intro-bar"></div>
+  <button class="intro-skip" id="introSkip" type="button" tabindex="-1">Passer</button>
+</div>
+<script>
+/* Ouverture : jouée une fois par visite, désactivée si l'utilisateur limite les animations */
+(function(){
+  var d=document.documentElement, el=document.getElementById("intro"), seen=false;
+  try{ seen=sessionStorage.getItem("izr-intro")==="1"; sessionStorage.setItem("izr-intro","1"); }catch(e){}
+  if (seen || matchMedia("(prefers-reduced-motion: reduce)").matches){ el.remove(); return; }
+  d.classList.add("intro-on");
+  function fit(){ /* la lumière suit exactement le tracé, quelle que soit la taille de l'écran */
+    var svg=el.querySelector("svg"), p=el.querySelector(".line"), dot=document.getElementById("introDot");
+    var w=innerWidth,h=innerHeight,s=Math.max(w/1200,h/700),ox=(w-1200*s)/2,oy=(h-700*s)/2;
+    var src=p.getAttribute("d").replace(/(-?\d+(\.\d+)?)\s+(-?\d+(\.\d+)?)/g,function(m,x,_,y){return (ox+x*s).toFixed(1)+" "+(oy+y*s).toFixed(1);});
+    dot.style.offsetPath="path('"+src+"')";
+  }
+  fit();
+  function done(){ if(el.parentNode) el.remove(); }
+  function skip(){ if(!el.parentNode||el.classList.contains("out")) return; d.classList.add("intro-fast"); el.classList.add("out"); setTimeout(done,650); }
+  document.getElementById("introSkip").addEventListener("click",skip);
+  el.addEventListener("click",skip);
+  addEventListener("keydown",function k(e){ if(e.key==="Escape"||e.key==="Enter"||e.key===" "){ skip(); removeEventListener("keydown",k);} });
+  addEventListener("wheel",skip,{once:true,passive:true});
+  setTimeout(done,3500);
+  setTimeout(function(){ d.classList.remove("intro-on","intro-fast"); },4300);
+})();
+</script>
+<a class="skip" href="#contenu">Aller au contenu</a>
+
+<header class="top" id="top">
+  <div class="wrap">
+    <a class="brand" href="#accueil" aria-label="IzenRide, accueil"><img src="assets/img/logo.png" alt="" width="36" height="36"><span>Izen<b>Ride</b></span></a>
+    <nav class="nav" aria-label="Navigation principale">
+      <a href="#navigation">Navigation</a>
+      <a href="#communaute">Communauté</a>
+      <a href="#securite">Sécurité</a>
+      <a href="#premium">Premium</a>
+      <a href="#faq">Questions</a>
+    </nav>
+    <a class="btn btn-primary" href="#telecharger">Télécharger</a>
+  </div>
+  <div class="progress" id="progress"></div>
+</header>
+
+<main id="contenu">
+  <!-- ===== Hero ===== -->
+  <section class="hero" id="accueil" aria-labelledby="hero-title" data-step="Départ">
+    <canvas id="road" aria-hidden="true"></canvas>
+    <div class="hero-shade" aria-hidden="true"></div>
+    <span class="sim-tag" aria-hidden="true">Simulation du guidage IzenRide</span>
+    <div class="gps-ui" id="gpsUi" aria-label="Démonstration du GPS IzenRide">
+      <div class="g-top">
+        <div class="g-banner" aria-live="off">
+          <span class="g-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path id="gArrowPath" d="M12 20V5M6 11l6-6 6 6"/></svg><i id="gExit" hidden></i></span>
+          <div><b class="tabnum" id="gDist">300 m</b><span id="gText">Continuez</span><small id="gStreet">sur Avenue de la Gare</small></div>
+        </div>
+        <div class="g-eta"><b class="tabnum" id="gEtaTime">--:--</b><span><span id="gEtaMin">12 min</span>, <span id="gEtaKm">3,4 km</span></span><small id="gDest">Étape 1 : Café du Col</small></div>
+      </div>
+      <div class="g-voice" id="gVoice" aria-hidden="true"></div>
+      <div class="g-side">
+        <button class="g-btn sos" type="button" id="gSos" aria-label="SOS">SOS<span class="g-tip">Alerte SOS</span></button>
+        <button class="g-btn" type="button" id="gShare" aria-label="Partager mon trajet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg><span class="g-tip">Partager mon trajet</span></button>
+        <button class="g-btn" type="button" id="gVoiceBtn" aria-label="Guidage vocal" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path id="gVoiceIco" d="M11 5 6 9H3v6h3l5 4V5ZM15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg><span class="g-tip">Guidage vocal</span></button>
+        <button class="g-btn" type="button" id="gLayers" aria-label="Riders à proximité" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17.5" cy="9" r="2.5"/><path d="M16 14.2a5 5 0 0 1 6 4.8"/></svg><em id="gRiders">0</em><span class="g-tip">Riders à proximité (Premium)</span></button>
+      </div>
+      <div class="g-limit tabnum" id="gLimit" aria-label="Limitation de vitesse">50</div>
+      <div class="g-toast" id="gToast" role="status"></div>
+    </div>
+    <div class="g-cur" id="gCur" aria-hidden="true">Avenue de la Gare</div>
+    <div class="nav-toast" id="navToast" aria-hidden="true"><img src="assets/img/logo.png" alt=""><div><b>Croisement</b><span></span></div></div>
+    <div class="wrap hero-main">
+      <div>
+        <h1 id="hero-title">Le cockpit <span class="l2">moto.</span></h1>
+        <p class="lede">IzenRide réunit la navigation GPS conçue pour la moto, la communauté moto de votre région et des outils de sécurité pour chacun de vos trajets.</p>
+        <div class="ctas">
+          <a class="btn btn-primary" href="https://play.google.com/store/apps/details?id=com.izenride.app" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.6 2.3 13.4 12l-8.8 9.7c-.4-.2-.6-.7-.6-1.2V3.5c0-.5.2-1 .6-1.2Zm10 8.4 2.4-2.6 3.3 1.9c1 .6 1 1.8 0 2.4l-3.3 1.9-2.4-2.6-.6-.7.6-.3ZM5.9 1.6l9.8 5.6-2.3 2.6-7.5-8.2Zm7.5 12.6 2.3 2.6-9.8 5.6 7.5-8.2Z"/></svg>
+            Google Play
+          </a>
+          <a class="btn btn-ghost" href="https://apps.apple.com/fr/app/izenride/id6476877458" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
+            App Store
+          </a>
+        </div>
+        <div class="hero-meta">
+          <a class="badge-new" href="#nouveautes"><b>Nouveau</b>Version 3.1.8 : groupes et messagerie améliorés</a>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18"/></svg>9 langues</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <div class="cluster" aria-label="Tableau de bord de la simulation de navigation">
+        <div class="gauge" aria-hidden="true">
+          <svg viewBox="0 0 132 84">
+            <path d="M12 76 A54 54 0 1 1 120 76" fill="none" stroke="var(--line)" stroke-width="7" stroke-linecap="round"/>
+            <path id="gaugeArc" d="M12 76 A54 54 0 1 1 120 76" fill="none" stroke="url(#gg)" stroke-width="7" stroke-linecap="round" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/>
+            <defs><linearGradient id="gg" x1="0" x2="1"><stop offset="0" stop-color="#2F7BFF"/><stop offset=".7" stop-color="#6FA6FF"/><stop offset="1" stop-color="#6FA6FF"/></linearGradient></defs>
+          </svg>
+          <div class="spd tabnum"><span id="spd">0</span><small>km/h</small></div>
+        </div>
+        <div class="readout"><span>Cap</span><b class="tabnum" id="cap">N 002°</b></div>
+        <div class="readout"><span>Inclinaison</span><b class="tabnum" id="lean">0°</b></div>
+        <div class="readout"><span>Parcouru</span><b class="tabnum" id="km">0,0<i>km</i></b></div>
+        <div class="readout"><span>Visibilité</span><b id="visV">Invisible</b></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Navigation ===== -->
+  <section class="band" id="navigation" aria-labelledby="nav-title" data-step="Navigation">
+    <div class="wrap">
+      <div class="sec-lead">
+        <div class="head">
+          <span class="kicker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-8-8 18-2-8-8-2Z"/></svg>Navigation</span>
+          <h2 id="nav-title">Un GPS conçu pour la moto, inclus gratuitement.</h2>
+        </div>
+        <p class="lede">Le guidage vocal virage par virage est accessible à l'ensemble des membres, sans abonnement, et disponible dans votre langue.</p>
+      </div>
+
+      <div class="nav-stage">
+        <div class="nav-phone">
+          <div class="phone"><img src="assets/screens/v319-itineraire.webp" alt="Écran Recherche d'itinéraire : départ, arrivée et étapes" width="540" height="1104"></div>
+          <div class="turn-card" aria-hidden="true">
+            <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 20V12a4 4 0 0 1 4-4h7M15 4l4 4-4 4"/></svg></span>
+            <div><b>300 m</b><span>Tournez à droite sur la D2</span></div>
+          </div>
+          <div class="voice" aria-hidden="true"><span class="wave"><i></i><i></i><i></i><i></i><i></i></span>Guidage vocal</div>
+        </div>
+
+        <div class="feat-grid">
+          <article class="feat">
+            <span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg></span>
+            <h3>Guidage vocal</h3>
+            <p>Instructions virage par virage dans les 9 langues de l'application. Le volume de la voix et la gestion de la musique sont réglables.</p>
+          </article>
+          <article class="feat">
+            <span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/></svg></span>
+            <h3>Itinéraires à étapes</h3>
+            <p>Planifiez un trajet avec plusieurs arrêts. En cas d'écart, l'itinéraire est recalculé automatiquement.</p>
+          </article>
+          <article class="feat">
+            <span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M3 21h12M14 9h2a2 2 0 0 1 2 2v5a1.5 1.5 0 0 0 3 0V8l-3-3"/><path d="M7 7h4"/></svg></span>
+            <h3>Stations et prix du jour</h3>
+            <p>Stations-service affichées sur la carte avec les prix du jour en France, en Italie, au Danemark et en Islande. Bornes de recharge en France, avec tarif indicatif.</p>
+            <div class="pumps" aria-label="Carburants affichés"><span class="pump">SP95</span><span class="pump">SP98</span><span class="pump">E10</span><span class="pump">E85</span><span class="pump">Gazole</span><span class="pump e">Bornes</span></div>
+          </article>
+          <article class="feat">
+            <span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></span>
+            <h3>Cartes hors ligne</h3>
+            <p>Téléchargez vos régions pour conserver la carte et vos itinéraires enregistrés sans réseau. Chaque trajet est archivé avec sa distance, sa durée et sa vitesse moyenne.</p>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Communauté ===== -->
+  <section class="band screens-sec" id="communaute" aria-labelledby="com-title" data-step="Communauté">
+    <div class="wrap">
+      <div class="sec-lead">
+        <div class="head">
+          <span class="kicker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17.5" cy="9" r="2.5"/><path d="M16 14.2a5 5 0 0 1 6 4.8"/></svg>La communauté</span>
+          <h2 id="com-title">La communauté moto de votre région.</h2>
+        </div>
+        <p class="lede">Rencontrez des riders qui partagent votre pratique, organisez vos sorties et retrouvez-vous sur la route. Seules les personnes avec lesquelles vous êtes en relation peuvent vous écrire.</p>
+      </div>
+
+      <div class="split xblock" id="croisement">
+      <div class="head">
+        <span class="kicker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20 20 4M4 4l16 16"/></svg>La signature IzenRide</span>
+        <h3 class="sub-h" id="croisement-title">Chaque salut sur la route, enregistré dans l'application.</h3>
+        <p class="lede">IzenRide enregistre automatiquement les riders que vous croisez, avec le lieu et l'heure de la rencontre.</p>
+        <div class="xtypes">
+          <div class="xtype"><b>Croisement</b><span>Passage à moins de 500 m, à 5 minutes d'intervalle.</span></div>
+          <div class="xtype"><b>Même route</b><span>Le même itinéraire emprunté le même jour.</span></div>
+          <div class="xtype"><b>Même endroit</b><span>Le même lieu fréquenté : un col, une aire, un point de rendez-vous.</span></div>
+        </div>
+        <p class="fine">Les rencontres répétées sont signalées, par exemple « 3 fois sur la même route ». Notifications en temps réel, quotidiennes ou hebdomadaires. Les croisements sont enregistrés lorsque vous partagez votre position, application ouverte. <b>L'historique complet est inclus dans Premium.</b></p>
+      </div>
+      <div class="cross-wrap cross-phone-wrap">
+        <div class="phone"><img src="assets/screens/v319-croisements.webp" alt="Écran Croisements : riders croisés, même route ou même endroit, avec leur moto (photos d'illustration)" width="540" height="1104"></div>
+      </div>
+      </div>
+
+      <div class="bento">
+        <article class="tile t-match" aria-labelledby="t-match">
+          <div class="tile-shot">
+            <div style="display:grid;gap:14px;align-content:start">
+              <h3 id="t-match">Match</h3>
+              <p class="tile-p">Mise en relation selon la moto, la distance, le style de conduite, le niveau et les centres d'intérêt.</p>
+              <p class="fine">Offre gratuite : 30 likes et 1 super-like par jour. Premium : likes illimités et 5 super-likes par jour.</p>
+            </div>
+            <div class="phone sm"><img src="assets/screens/v319-match.webp" alt="Écran Match : profil d'un rider et actions (photo d'illustration)" width="540" height="1104"></div>
+          </div>
+        </article>
+
+        <article class="tile t-chat" aria-labelledby="t-chat">
+          <div class="tile-shot">
+            <div style="display:grid;gap:14px;align-content:start">
+              <h3 id="t-chat">Messagerie</h3>
+              <p class="tile-p">Messages texte, vocaux et photos. Un contact n'est possible qu'après un match, l'échange de votre code, ou un groupe ou une sortie en commun.</p>
+              <ul class="checks">
+                <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></span><div><b>Mon code</b><span>Ajout d'un contact par code personnel.</span></div></li>
+                <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></span><div><b>Premier message</b><span>Option réservant le premier message à vos matchs.</span></div></li>
+              </ul>
+            </div>
+            <div class="phone sm"><img src="assets/screens/v319-groupe.webp" alt="Écran de discussion de groupe avec une sortie proposée (photos d'illustration)" width="540" height="1104"></div>
+          </div>
+        </article>
+
+        <article class="tile t-events" aria-labelledby="t-events">
+          <div class="ev-layout">
+            <div style="display:grid;gap:14px">
+              <h3 id="t-events">Sorties</h3>
+              <p style="color:var(--mute)">Balades, rassemblements et track days à proximité. Inscription, discussion dédiée et album photo partagé pour chaque sortie.</p>
+              <ul class="checks">
+                <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></span><div><b>Inviter mes contacts</b><span>Les personnes qui organisent ou rejoignent la sortie peuvent inviter leurs contacts.</span></div></li>
+                <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></span><div><b>« Y aller »</b><span>Le lieu de rendez-vous s'ouvre sur la carte et lance le guidage.</span></div></li>
+              </ul>
+              <span class="tag">Création de sorties : Premium</span>
+            </div>
+            <div class="phone sm"><img src="assets/screens/v319-agenda.webp" alt="Écran Agenda : sorties et rassemblements à venir" width="540" height="1104"></div>
+          </div>
+        </article>
+
+        <article class="tile t-groups" aria-labelledby="t-groups">
+          <span class="tag" style="color:var(--glow);background:color-mix(in srgb,var(--signal) 16%,transparent)">Nouveau en 3.1.8</span>
+          <h3 id="t-groups">Groupes</h3>
+          <p>Un espace dédié à votre club ou à votre groupe de riders. Les invitations sont envoyées à vos contacts, qui rejoignent le groupe après acceptation. L'administration du groupe est toujours assurée.</p>
+          <div class="invite" aria-hidden="true">
+            <div class="link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg><span>Lien d'invitation au groupe</span></div>
+            <div class="opts"><span>Permanent</span><span class="on">10 utilisations</span><span>7 jours</span></div>
+          </div>
+          <ul class="checks">
+            <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></span><div><b>Lien désactivable</b><span>La personne qui administre le groupe peut désactiver un lien d'invitation à tout moment.</span></div></li>
+            <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></span><div><b>Pastilles de non lus</b><span>Par groupe et sur l'onglet Chat, avec nom et photo synchronisés en temps réel.</span></div></li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Sécurité ===== -->
+  <section class="band safety" id="securite" aria-labelledby="securite-title" data-step="Sécurité">
+    <div class="wrap">
+      <div class="sec-lead">
+        <div class="head">
+          <span class="kicker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6l-8-3Z"/></svg>Sécurité</span>
+          <h2 id="securite-title">Votre sécurité, à chaque trajet.</h2>
+        </div>
+        <p class="lede">Fonctions incluses pour l'ensemble des membres. Vous gardez le contrôle des informations visibles par les autres.</p>
+      </div>
+
+      <div class="safety-grid">
+        <article class="panel p-sos" aria-labelledby="sos-title">
+          <span class="status live">Disponible</span>
+          <h3 id="sos-title">Alerte SOS</h3>
+          <p>Le bouton SOS de la carte déclenche un décompte de 10 secondes. Sans annulation, votre position exacte est transmise aux membres IzenRide à proximité, qui peuvent vous répondre.</p>
+          <div class="sos-demo">
+            <button class="sos-btn" id="sosBtn" type="button" aria-describedby="sosMsg">
+              <svg class="ring" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="47" fill="none" stroke="rgba(240,74,74,.25)" stroke-width="3"/><circle id="sosRing" cx="50" cy="50" r="47" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/></svg>
+              <span><span class="lbl tabnum" id="sosLbl">SOS</span><span class="sub" id="sosSub">Démonstration</span></span>
+            </button>
+            <p class="sos-msg" id="sosMsg" aria-live="polite">Démonstration : aucune alerte n'est envoyée depuis cette page.</p>
+            <button class="btn btn-ghost sos-cancel" id="sosCancel" type="button" hidden>Je vais bien</button>
+          </div>
+          <p class="fine"><b>Vos contacts d'urgence :</b> après une alerte, chaque contact peut être joint directement depuis l'application. IzenRide ne les prévient pas automatiquement. Le numéro d'urgence 112 reste affiché.</p>
+        </article>
+
+        <article class="panel p-vis" aria-labelledby="prec-title">
+          <span class="status live">Disponible</span>
+          <h3 id="prec-title">Ce que les autres voient de vous</h3>
+          <div class="prec-layout">
+            <div style="display:grid;gap:16px">
+              <p style="color:var(--mute)">Choisissez le niveau de précision de votre position : exacte, approximative, à l'échelle de la ville ou masquée.</p>
+              <div class="seg" role="group" aria-label="Précision de la position">
+                <button type="button" data-r="10" data-t="Précise" data-d="Les riders à proximité vous voient à 50 m près." aria-pressed="true">50 m</button>
+                <button type="button" data-r="36" data-t="Approximative" data-d="Votre point est flouté dans un rayon de 500 m." aria-pressed="false">500 m</button>
+                <button type="button" data-r="80" data-t="Ville" data-d="Seule votre ville apparaît, à 5 km près." aria-pressed="false">Ville</button>
+                <button type="button" data-r="0" data-t="Masquée" data-d="Vous n'apparaissez pas sur la carte." aria-pressed="false">Masquée</button>
+              </div>
+              <div class="prec-out" aria-live="polite"><b id="precT">Précise</b><span id="precD">Les riders à proximité vous voient à 50 m près.</span></div>
+              <ul class="checks">
+                <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></span><div><b>Zones de confidentialité</b><span>Jusqu'à 5 zones, chacune avec son rayon, dans lesquelles vous n'apparaissez pas sur la carte.</span></div></li>
+                <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></span><div><b>Visible quand vous le décidez</b><span>Votre position n'est partagée qu'après activation, application ouverte.</span></div></li>
+              </ul>
+            </div>
+            <div class="radar" aria-hidden="true">
+              <div class="sweep"></div>
+              <svg viewBox="0 0 200 200">
+                <g fill="none" stroke="#1E2129"><circle cx="100" cy="100" r="30"/><circle cx="100" cy="100" r="60"/><circle cx="100" cy="100" r="90"/><path d="M100 5v190M5 100h190"/></g>
+                <circle class="me" id="precHalo" cx="100" cy="100" r="10" fill="rgba(47,123,255,.28)" stroke="#6FA6FF" stroke-dasharray="3 3"/>
+                <circle class="me" id="precDot" cx="100" cy="100" r="6" fill="#6FA6FF" stroke="#fff" stroke-width="2"/>
+                <circle cx="148" cy="62" r="4" fill="#A9C8FF"/><circle cx="58" cy="140" r="4" fill="#A9C8FF"/><circle cx="160" cy="132" r="4" fill="#A9C8FF"/>
+              </svg>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel p-share" aria-labelledby="share-title">
+          <div class="share-layout">
+            <div style="display:grid;gap:14px;align-content:start">
+              <span class="status live">Disponible</span>
+              <h3 id="share-title">Partage de trajet avec vos proches</h3>
+              <p style="color:var(--mute)">Un lien sécurisé permet à vos proches de suivre votre position, votre vitesse et votre heure d'arrivée estimée, sans installer l'application ni créer de compte. Le lien expire après 24 heures et peut être révoqué à tout moment.</p>
+            </div>
+          <div class="share-card" aria-hidden="true">
+            <div class="share-top"><b>Suivi en direct</b><span class="live-dot">En route</span></div>
+            <div class="share-stats">
+              <div><span>Vitesse</span><b>72 km/h</b></div>
+              <div><span>Arrivée</span><b>17:40</b></div>
+              <div><span>Expire dans</span><b>23 h</b></div>
+            </div>
+            <div class="share-top"><span>Code d'accès</span><span class="pin"><span>4</span><span>8</span><span>2</span><span>1</span><span>9</span></span></div>
+          </div>
+          </div>
+        </article>
+      </div>
+
+      <div class="trust-inline">
+        <h3 class="sub-h">Nos engagements</h3>
+      <div class="pledges">
+        <div class="pledge"><b>0<small>donnée vendue</small></b><p>IzenRide ne vend, ne loue ni n'échange vos données personnelles.</p></div>
+        <div class="pledge"><b>0<small>pistage publicitaire</small></b><p>Aucun profilage publicitaire ni notation de votre conduite.</p></div>
+        <div class="pledge"><b>7 j<small>d'historique de position</small></b><p>Puis supprimé automatiquement (30 jours avec Premium). Vos trajets peuvent être supprimés à tout moment.</p></div>
+        <div class="pledge"><b>UE<small>hébergement principal</small></b><p>La base de données est hébergée dans l'Union européenne, à Francfort. Export des données et suppression du compte depuis les réglages.</p></div>
+      </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Écrans ===== -->
+  <section class="band screens-sec" id="ecrans" aria-labelledby="ecrans-title" data-step="Les écrans">
+    <div class="wrap">
+      <div class="head" style="margin-inline:auto;text-align:center;justify-items:center">
+        <span class="kicker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10.5 18.5h3" stroke-linecap="round"/></svg>Aperçu de l'application</span>
+        <h2 id="ecrans-title">L'application en images</h2>
+        <p class="lede">Captures d'écran de l'application (version 3.1.9, compte de démonstration). Faites défiler avec la souris, le doigt ou les flèches du clavier.</p>
+      </div>
+      <div class="carousel" id="carousel" role="region" aria-roledescription="carrousel" aria-label="Écrans de l'application" tabindex="0"></div>
+      <div class="car-ctrl">
+        <button class="nav-b" type="button" id="prevB" aria-label="Écran précédent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7"/></svg></button>
+        <div class="car-cap" aria-live="polite"><b id="capName">Carte</b><span id="capDesc"></span><small id="capCount"></small></div>
+        <button class="nav-b" type="button" id="nextB" aria-label="Écran suivant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg></button>
+      </div>
+      <div class="chips" id="chips" aria-label="Aller à un écran"></div>
+    </div>
+  </section>
+
+  <!-- ===== Premium ===== -->
+  <section class="band" id="premium" aria-labelledby="premium-title" data-step="Premium">
+    <div class="wrap">
+      <div class="sec-lead">
+        <div class="head">
+          <span class="kicker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5L3 8Z"/></svg>Sans engagement</span>
+          <h2 id="premium-title">L'essentiel est gratuit.</h2>
+        </div>
+        <p class="lede">Guidage GPS, SOS, zones de confidentialité, messagerie et sorties sont inclus gratuitement. L'abonnement Premium donne accès à la carte des riders, à l'historique des croisements et à la création de sorties.</p>
+      </div>
+
+      <div class="prem-layout">
+        <div class="cmp-wrap">
+          <table class="cmp">
+            <thead><tr><th scope="col">Fonction</th><th scope="col">Gratuit</th><th scope="col">Premium</th></tr></thead>
+            <tbody>
+              <tr class="grp"><td colspan="3">Route et sécurité</td></tr>
+              <tr><td>Guidage GPS vocal, itinéraires à étapes</td><td class="y"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-label="Inclus"><path d="m5 12 5 5 9-10"/></svg></td><td class="y"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-label="Inclus"><path d="m5 12 5 5 9-10"/></svg></td></tr>
+              <tr><td>Stations, cartes hors ligne, historique des trajets</td><td class="y"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-label="Inclus"><path d="m5 12 5 5 9-10"/></svg></td><td class="y"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-label="Inclus"><path d="m5 12 5 5 9-10"/></svg></td></tr>
+              <tr><td>SOS, zones de confidentialité, partage de trajet</td><td class="y"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-label="Inclus"><path d="m5 12 5 5 9-10"/></svg></td><td class="y"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-label="Inclus"><path d="m5 12 5 5 9-10"/></svg></td></tr>
+              <tr><td>Historique de position conservé</td><td>7 jours</td><td>30 jours</td></tr>
+              <tr class="grp"><td colspan="3">Communauté</td></tr>
+              <tr><td>Messagerie, groupes, rejoindre des sorties</td><td class="y"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-label="Inclus"><path d="m5 12 5 5 9-10"/></svg></td><td class="y"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-label="Inclus"><path d="m5 12 5 5 9-10"/></svg></td></tr>
+              <tr><td>Riders sur la carte en temps réel</td><td class="n"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-label="Non inclus"><path d="M6 12h12"/></svg></td><td class="y"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-label="Inclus"><path d="m5 12 5 5 9-10"/></svg></td></tr>
+              <tr><td>Historique de vos croisements</td><td>Flouté</td><td>Complet</td></tr>
+              <tr><td>Créer vos sorties</td><td class="n"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-label="Non inclus"><path d="M6 12h12"/></svg></td><td class="y"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-label="Inclus"><path d="m5 12 5 5 9-10"/></svg></td></tr>
+              <tr><td>Likes par jour</td><td class="tabnum">30</td><td>Illimités</td></tr>
+              <tr><td>Super-likes par jour</td><td class="tabnum">1</td><td class="tabnum">5</td></tr>
+              <tr><td>« Qui m'a liké » et filtres avancés</td><td class="n"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-label="Non inclus"><path d="M6 12h12"/></svg></td><td class="y"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-label="Inclus"><path d="m5 12 5 5 9-10"/></svg></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="prices">
+          <div class="price-card"><div class="pl">Mensuel</div><b class="tabnum">9,99 €<small>par mois</small></b><span>Sans engagement</span></div>
+          <div class="price-card best"><div class="pl">Annuel <em>Meilleure offre</em></div><b class="tabnum">79,99 €<small>par an</small></b><span>Soit 6,67 € par mois</span></div>
+          <p class="price-note">L'abonnement IzenRide Premium se souscrit dans l'application, via Google Play ou l'App Store. Renouvellement automatique, résiliable à tout moment depuis votre compte.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Nouveautés ===== -->
+  <section class="band band-tight" id="nouveautes" aria-labelledby="new-title" data-step="Nouveautés">
+    <div class="wrap">
+      <div class="sec-lead">
+        <div class="head">
+          <span class="kicker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg>Nouveautés</span>
+          <h2 id="new-title">Une application entièrement repensée, régulièrement enrichie.</h2>
+        </div>
+        <p class="lede">Fin août 2026, IzenRide a été entièrement reconstruite. Six mises à jour ont suivi en six semaines.</p>
+      </div>
+
+      <div class="release">
+        <article class="current" aria-labelledby="v318">
+          <div class="ver"><b id="v318">3.1.8</b><span>Octobre 2026, Android et iPhone</span></div>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17.5" cy="9" r="2.5"/></svg><div><b>Groupes</b><span>Liens d'invitation paramétrables, nom et photo synchronisés en temps réel, administration du groupe toujours assurée, notifications dans la langue du téléphone.</span></div></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z"/></svg><div><b>Messagerie</b><span>L'onglet Messages s'affiche avant Groupes, avec un indicateur de messages non lus. Le champ de saisie reste visible au-dessus du clavier.</span></div></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z"/></svg><div><b>Après un SOS</b><span>Appel direct de chaque contact d'urgence depuis l'application.</span></div></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-8-8 18-2-8-8-2Z"/></svg><div><b>Carte et guidage</b><span>Meilleure lisibilité des sorties sur la carte. Respect du mode silencieux pendant le guidage.</span></div></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="8" r="4"/></svg><div><b>Inscription</b><span>Biographie facultative et connexion automatique après confirmation de l'adresse e-mail.</span></div></li>
+          </ul>
+        </article>
+
+        <details class="older">
+          <summary>Versions précédentes, de 3.1.0 à 3.1.5</summary>
+        <ol class="timeline" aria-label="Versions précédentes">
+          <li><span class="dot" aria-hidden="true"></span><div><div class="head2"><b>3.1.5</b><time datetime="2026-09-16">16 septembre</time></div><p>Invitation de contacts à une sortie. Ouverture du lieu de rendez-vous sur la carte et lancement du guidage avec « Y aller ».</p></div></li>
+          <li><span class="dot" aria-hidden="true"></span><div><div class="head2"><b>3.1.4</b><time datetime="2026-09-14">14 septembre</time></div><p>Fonction « Mon code » sur le profil. Option réservant le premier message à vos matchs. Lien de partage protégé par un code à 5 chiffres, actif écran éteint.</p></div></li>
+          <li><span class="dot" aria-hidden="true"></span><div><div class="head2"><b>3.1.3</b><time datetime="2026-09-08">8 septembre</time></div><p>Partage de position avec vos proches, sans application ni compte. Accès aux croisements depuis la carte, avec les catégories « même route » et « même endroit ».</p></div></li>
+          <li><span class="dot" aria-hidden="true"></span><div><div class="head2"><b>3.1.1</b><time datetime="2026-09-01">1er septembre</time></div><p>Application et guidage vocal disponibles en 9 langues.</p></div></li>
+          <li><span class="dot" aria-hidden="true"></span><div><div class="head2"><b>3.1.0</b><time datetime="2026-08-30">Fin août</time></div><p>Nouvelle version d'IzenRide, entièrement reconstruite.</p></div></li>
+        </ol>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Questions ===== -->
+  <section class="band" id="faq" aria-labelledby="faq-title" data-step="Questions">
+    <div class="wrap faq-layout">
+      <div class="head">
+        <span class="kicker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17v.01"/></svg>Questions fréquentes</span>
+        <h2 id="faq-title">Vos questions, nos réponses</h2>
+        <p class="lede">Pour toute autre question, contactez-nous à l'adresse <a href="mailto:support@izenride.com">support@izenride.com</a>.</p>
+      </div>
+      <div class="faq">
+        <details open><summary>IzenRide est-il gratuit ?</summary><p>Oui, les fonctions essentielles sont gratuites : guidage GPS vocal, SOS, zones de confidentialité, partage de trajet, messagerie, groupes et sorties. L'abonnement Premium (9,99 € par mois ou 79,99 € par an, sans engagement) donne accès à la carte des riders en temps réel, à l'historique des croisements, à la création de sorties et supprime les limites de likes.</p></details>
+        <details><summary>Le SOS prévient-il mes proches ?</summary><p>Non. Après un décompte de 10 secondes, votre position exacte est transmise aux membres IzenRide à proximité, qui peuvent vous répondre. IzenRide ne prévient pas vos contacts d'urgence : l'application vous permet de les appeler directement et affiche le numéro d'urgence 112.</p></details>
+        <details><summary>Qui voit ma position ?</summary><p>Personne, tant que vous ne la partagez pas. Une fois le partage activé, application ouverte, les membres à proximité vous voient selon la précision choisie : 50 m, 500 m, à l'échelle de la ville ou pas du tout. Jusqu'à 5 zones de confidentialité vous rendent invisible autour des lieux de votre choix.</p></details>
+        <details><summary>Comment fonctionne un croisement ?</summary><p>Un croisement est enregistré lorsque deux membres partageant leur position passent à moins de 500 m de distance, à 5 minutes d'intervalle. L'application identifie également les riders ayant emprunté le même itinéraire le même jour ou fréquenté le même lieu.</p></details>
+        <details><summary>Sur quels téléphones, et dans quelles langues ?</summary><p>IzenRide est disponible sur Android et iPhone. L'application et le guidage vocal sont proposés en 9 langues : français, anglais, allemand, espagnol, italien, néerlandais, polonais, roumain et grec.</p></details>
+        <details><summary>Que deviennent mes données ?</summary><p>IzenRide ne vend, ne loue ni n'échange vos données personnelles. L'historique de position est supprimé après 7 jours (30 jours avec Premium). L'export de vos données et la suppression de votre compte sont disponibles dans les réglages.</p></details>
+        <details><summary>Quelles fonctions ne sont pas encore disponibles ?</summary><p>L'application ne détecte pas les chutes : l'alerte SOS se déclenche manuellement. Aucune alerte automatique n'est envoyée à vos proches. Les signalements de dangers entre membres ne sont pas encore disponibles.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Téléchargement ===== -->
+  <section class="band get" id="telecharger" aria-labelledby="get-title" data-step="Arrivée">
+    <div class="wrap">
+      <h2 id="get-title">Téléchargez<br>IzenRide.</h2>
+      <p class="lede">Disponible gratuitement sur Android et iPhone, en 9 langues. Créez votre compte en quelques minutes et paramétrez votre visibilité dès la première utilisation.</p>
+      <div class="ctas">
+        <a class="store" href="https://play.google.com/store/apps/details?id=com.izenride.app" rel="noopener">
+          <svg class="gp" viewBox="0 0 23 26" aria-hidden="true"><path fill="#00A0FF" d="M1.2.7C.9 1 .8 1.4.8 1.9v21.8c0 .5.1.9.4 1.2L13.3 12.8Z"/><path fill="#00F076" d="M1.2.7 13.3 12.8l3.6-3.6L2.9.4C2.3 0 1.6 0 1.2.7Z"/><path fill="#FF3A44" d="M1.2 24.9c.4.7 1.1.7 1.7.4l14-8.9-3.6-3.6Z"/><path fill="#FFD500" d="m16.9 9.2-3.6 3.6 3.6 3.6 4.1-2.3c1.2-.7 1.2-1.9 0-2.6Z"/></svg>
+          <span><small>Disponible sur</small><b>Google Play</b></span>
+        </a>
+        <a class="store" href="https://apps.apple.com/fr/app/izenride/id6476877458" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
+          <span><small>Télécharger dans</small><b>l'App Store</b></span>
+        </a>
+      </div>
+    </div>
+  </section>
+</main>
+
+
+<figure class="zoom-peek" id="zoomPeek" aria-hidden="true"><img alt=""><figcaption></figcaption></figure>
+<div class="zoom-box" id="zoomBox" role="dialog" aria-modal="true" aria-label="Écran agrandi" hidden>
+  <button class="zoom-close" id="zoomClose" type="button" aria-label="Fermer">×</button>
+  <figure><img alt=""><figcaption></figcaption></figure>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-row">
+      <a class="brand" href="#accueil"><img src="assets/img/logo.png" alt="" width="36" height="36"><span>Izen<b>Ride</b></span></a>
+      <p class="motto">Pensé pour la route.</p>
+      <div class="foot-links" aria-label="Réseaux sociaux">
+        <a href="https://www.instagram.com/izenride/" rel="noopener">Instagram</a>
+        <a href="https://www.tiktok.com/@IZENRIDE" rel="noopener">TikTok</a>
+        <a href="https://www.youtube.com/@IZENRIDE" rel="noopener">YouTube</a>
+      </div>
+    </div>
+    <nav class="foot-links" aria-label="Informations légales">
+      <a href="cgu.html">CGU</a>
+      <a href="cgv.html">CGV</a>
+      <a href="mentions-legales.html">Mentions légales</a>
+      <a href="confidentialite.html">Confidentialité</a>
+      <a href="suppression-compte.html">Supprimer mon compte</a>
+      <a href="support.html">Aide</a>
+      <a href="mailto:support@izenride.com">support@izenride.com</a>
+    </nav>
+    <p>© 2026 IZEN RIDE SAS, 4 rue Massilie, 13420 Gémenos. RCS Marseille 981 848 922.</p>
+  </div>
+</footer>
+
+<script>
+/* ===== Écrans de l'application =====
+   Pour publier de nouveaux écrans : déposez les images (540 × 1119 px conseillé, en .webp ou .jpg)
+   dans assets/screens/ puis modifiez, ajoutez ou retirez des lignes ci-dessous.
+   L'ordre de la liste est l'ordre d'affichage. */
+const SCREENS = [
+  { file: "v319-bienvenue.webp",   name: "Bienvenue",       desc: "Écran d'accueil : présentation des croisements et de la zone de confidentialité." },
+  { file: "v319-carte.webp",       name: "Carte",           desc: "Accès direct à l'itinéraire, aux croisements, au partage de position, au SOS et aux stations." },
+  { file: "v319-itineraire.webp",  name: "Itinéraire",      desc: "Saisie du départ, de l'arrivée et des étapes avant le guidage vocal." },
+  { file: "v319-croisements.webp", name: "Croisements",     desc: "Les riders croisés, sur la même route ou au même endroit, avec leur moto (photos de profil d'illustration)." },
+  { file: "v319-match.webp",       name: "Match",           desc: "Mise en relation avec des riders selon votre style de conduite (photo de profil d'illustration)." },
+  { file: "v319-groupe.webp",      name: "Groupe",          desc: "Discussion de groupe avec proposition de sortie et réponses de chaque membre (photos de profil d'illustration)." },
+  { file: "v319-agenda.webp",      name: "Sorties",         desc: "Agenda des balades, expositions, salons et rassemblements à venir." },
+  { file: "v319-profil.webp",      name: "Profil",          desc: "Statistiques de sorties et de kilomètres, riders croisés et « Mon code »." },
+  { file: "v319-precision.webp",   name: "Précision",       desc: "Réglage de la précision de votre position : 50 m, 500 m ou 5 km." },
+  { file: "v319-hors-ligne.webp",  name: "Hors ligne",      desc: "Téléchargement des régions pour utiliser la carte et le guidage sans réseau." },
+  { file: "v319-premium.webp",     name: "Premium",         desc: "Comparatif des offres Gratuit et Premium." }
+];
+
+const REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const css = getComputedStyle(document.documentElement);
+const tok = n => css.getPropertyValue(n).trim();
+
+/* ===== Hero : simulation GPS IzenRide =====
+   Un rider roule avec le guidage actif. Le réseau routier est généré au fil du trajet :
+   rues, carrefours, ronds-points, départementales et lacets de col. Les options de l'app
+   sont à l'écran : manœuvres, guidage vocal, limitation, heure d'arrivée et étapes,
+   stations, sorties, riders à proximité, croisements, zone de confidentialité, SOS et partage.
+   Tout est simulé : aucune donnée réelle. */
+const ride = { speed: 0, vel: 0, lastY: scrollY, heading: 0, lean: 0, dist: 0, visible: false };
+(function navSim(){
+  const $id = id => document.getElementById(id);
+  const cv = $id("road"), ctx = cv.getContext("2d"), hero = cv.parentElement;
+  const UI = {
+    box: $id("gpsUi"), arrow: $id("gArrowPath"), exit: $id("gExit"), dist: $id("gDist"), text: $id("gText"), street: $id("gStreet"),
+    eta: $id("gEtaTime"), etaMin: $id("gEtaMin"), etaKm: $id("gEtaKm"), dest: $id("gDest"), limit: $id("gLimit"),
+    cur: $id("gCur"), voice: $id("gVoice"), toast: $id("gToast"), cross: $id("navToast"), riders: $id("gRiders")
+  };
+  let W = 0, H = 0, DPR = 1, Z = 1.6, AXF = .5, AYF = .62, visible = true;
+  let muted = false, showRiders = true;
+
+  // --- hasard reproductible
+  let seed = 20261011;
+  const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+  const pick = a => a[Math.floor(rnd() * a.length)];
+
+  // --- état du générateur (mètres ; x vers l'est, y vers le sud)
+  const STEP = 4, NORTH = -Math.PI / 2;
+  const pts = [], queue = [], events = [];
+  const F = { forest: [], fields: [], blocks: [], streets: [], rings: [], labels: [], pois: [], roam: [], marks: [] };
+  let gx = 0, gy = 0, ga = NORTH, gs = 0;
+  const ZONES = ["village", "campagne", "foret", "col", "village", "foret", "campagne"];
+  const LIMIT = { village: 50, campagne: 80, foret: 80, col: 80 };
+  const TOWNS = ["Gémenos", "Cuges-les-Pins", "Plan-d'Aups", "Signes", "Le Castellet", "Roquevaire"];
+  const STREETS = ["Avenue de la Gare", "Rue Victor Hugo", "Boulevard Gambetta", "Rue de la République", "Avenue Jean Jaurès", "Rue du Moulin", "Chemin de Saint-Jean", "Rue des Écoles", "Avenue des Platanes", "Rue Pasteur", "Cours Foch", "Rue de l'Église"];
+  const DROADS = ["D2", "D396", "D80", "D1", "D559", "D8N"];
+  let zi = 0, zone = "village", zoneLeft = 900, ti = 0, sti = 0, di = 0, curName = "Avenue de la Gare", lastTurn = 0, eventPlaced = false;
+  const nextStreet = () => STREETS[sti++ % STREETS.length];
+  const nextD = () => DROADS[di++ % DROADS.length];
+
+  const tan = a => ({ x: Math.cos(a), y: Math.sin(a) });
+  const nrm = a => ({ x: -Math.sin(a), y: Math.cos(a) }); // normale à droite
+
+  function street(s, x, y, ang, len, name, opts = {}){
+    const line = [[x, y]], wob = opts.wobble ?? (zone === "village" ? .06 : .25);
+    let a = ang;
+    for (let d = 0; d < len; d += 30){ a += (rnd() - .5) * wob; x += Math.cos(a) * 30; y += Math.sin(a) * 30; line.push([x, y]); }
+    const st = { s, line, name, major: !!opts.major };
+    F.streets.push(st);
+    if (name && len > 120){ const m = line[Math.floor(line.length / 2)]; F.labels.push({ s, x: m[0], y: m[1], text: name, kind: opts.major ? "road" : "street" }); }
+    if (zone === "village" && !opts.bare){
+      for (let i = 1; i < Math.min(line.length - 1, 6); i++){
+        const [x0, y0] = line[i], [x1, y1] = line[i + 1], aa = Math.atan2(y1 - y0, x1 - x0), n = nrm(aa);
+        [-1, 1].forEach(side => { if (rnd() < .75){ const lat = side * (17 + rnd() * 10); F.blocks.push({ s, x: x0 + n.x * lat, y: y0 + n.y * lat, w: 11 + rnd() * 10, h: 9 + rnd() * 8, a: aa }); } });
+      }
+    }
+    if (zone === "village" && rnd() < .35) F.roam.push({ s, line, t: rnd(), v: (.05 + rnd() * .06) * (rnd() < .5 ? -1 : 1) });
+    return st;
+  }
+  function crossing(p){ // carrefour : une rue traverse l'itinéraire
+    const n = nrm(p.a), name = zone === "village" ? nextStreet() : nextD();
+    const L1 = (zone === "village" ? 120 : 260) + rnd() * 200, L2 = (zone === "village" ? 120 : 260) + rnd() * 200;
+    street(p.s, p.x, p.y, Math.atan2(n.y, n.x), L1, name, { major: zone !== "village" });
+    street(p.s, p.x, p.y, Math.atan2(-n.y, -n.x), L2, null, { major: zone !== "village" });
+  }
+  function junctionTurn(p, dir, R){ // tourne : la rue quittée continue, l'autre côté existe aussi
+    const t = tan(p.a), n = nrm(p.a), J = { x: p.x + t.x * R, y: p.y + t.y * R };
+    street(p.s, J.x, J.y, p.a, 140 + rnd() * 160, null, { major: zone !== "village", bare: zone !== "village" });
+    street(p.s, J.x, J.y, Math.atan2(-dir * n.y, -dir * n.x), 140 + rnd() * 180, zone === "village" ? nextStreet() : null, { major: zone !== "village" });
+  }
+  function ring(p, R){ // rond-point : anneau et branches
+    const n = nrm(p.a), C = { x: p.x - n.x * R, y: p.y - n.y * R };
+    F.rings.push({ s: p.s, x: C.x, y: C.y, r: R });
+    const a0 = Math.atan2(p.y - C.y, p.x - C.x);
+    for (let k = 0; k < 4; k++){
+      const a = a0 + k * Math.PI / 2 + Math.PI / 4;
+      street(p.s, C.x + Math.cos(a) * R, C.y + Math.sin(a) * R, a, 100 + rnd() * 140, k === 1 ? nextStreet() : null, { bare: false });
+    }
+  }
+  function buildingsAlong(p, len){
+    if (zone !== "village") return;
+    const t = tan(p.a), n = nrm(p.a);
+    for (let d = 8; d < len; d += 15){
+      [-1, 1].forEach(side => { if (rnd() < .78){ const lat = side * (18 + rnd() * 9); F.blocks.push({ s: p.s + d, x: p.x + t.x * d + n.x * lat, y: p.y + t.y * d + n.y * lat, w: 11 + rnd() * 6, h: 10 + rnd() * 9, a: p.a }); } });
+    }
+  }
+
+  function plan(){
+    const drift = ga - NORTH;
+    const dirTo = () => drift > .5 ? -1 : drift < -.5 ? 1 : (rnd() < .5 ? -1 : 1);
+    if (zone === "village"){
+      const r = rnd();
+      if (r < .42 || gs - lastTurn < 160){
+        const len = 60 + rnd() * 50;
+        queue.push({ len, k: 0, start: p => { crossing(p); buildingsAlong(p, len); } });
+      } else if (r < .78){
+        const dir = dirTo(), name = nextStreet(), R = 10;
+        queue.push({ len: 60 + rnd() * 40, k: 0, start: p => buildingsAlong(p, 90) });
+        queue.push({ len: Math.PI / 2 * R, k: dir / R, start: p => { junctionTurn(p, dir, R); events.push({ s: p.s, kind: "turn", dir, street: name }); curName = name; lastTurn = p.s; } });
+      } else {
+        const exit = drift < -.5 ? 2 : (rnd() < .55 ? 2 : 3), around = exit === 2 ? 80 : 170, name = nextStreet(), R = 14, r2 = 9;
+        queue.push({ len: 70, k: 0, start: p => buildingsAlong(p, 60) });
+        queue.push({ len: 40 / 180 * Math.PI * r2, k: 1 / r2, start: p => events.push({ s: p.s, kind: "round", exit, dir: exit === 2 ? 0 : -1, street: name }) });
+        queue.push({ len: around / 180 * Math.PI * R, k: -1 / R, start: p => { ring(p, R); curName = name; lastTurn = p.s; } });
+        queue.push({ len: 40 / 180 * Math.PI * r2, k: 1 / r2 });
+      }
+    } else if (zone === "col"){
+      const R = 24 + rnd() * 12, d = rnd() < .5 ? 1 : -1;
+      queue.push({ len: 50 + rnd() * 50, k: 0 }, { len: Math.PI * R, k: d / R }, { len: 60 + rnd() * 50, k: 0 }, { len: Math.PI * R, k: -d / R });
+    } else {
+      const r = rnd();
+      if (r < .14 && gs - lastTurn > 600){
+        const dir = dirTo(), name = nextD(), R = 16;
+        queue.push({ len: 90, k: 0 });
+        queue.push({ len: Math.PI / 2 * R, k: dir / R, start: p => { junctionTurn(p, dir, R); events.push({ s: p.s, kind: "turn", dir, street: name }); curName = name; lastTurn = p.s; } });
+      } else if (r < .4){
+        queue.push({ len: 120 + rnd() * 200, k: 0, start: p => crossing(p) });
+      } else {
+        const R = 130 + rnd() * 240; let d = rnd() < .5 ? 1 : -1;
+        if (Math.abs(drift) > .7) d = -Math.sign(drift);
+        queue.push({ len: (.4 + rnd() * .9) * R, k: d / R });
+      }
+    }
+  }
+  function onZone(p){
+    if (zone === "village"){
+      const n = nrm(p.a);
+      F.labels.push({ s: p.s, x: p.x + n.x * 110, y: p.y + n.y * 110, text: TOWNS[ti++ % TOWNS.length], kind: "town" });
+      curName = nextStreet(); eventPlaced = false;
+    } else {
+      if (!/^D/.test(curName)) curName = nextD();
+      if (zone === "col"){ const n = nrm(p.a); F.labels.push({ s: p.s, x: p.x + n.x * 80, y: p.y + n.y * 80, text: "Col de l'Espigoulier", kind: "col" }); curName = "Route du Col"; }
+    }
+  }
+  function decorate(p){
+    const n = nrm(p.a), t = tan(p.a);
+    const at2 = (lat, lon) => ({ x: p.x + n.x * lat + t.x * lon, y: p.y + n.y * lat + t.y * lon });
+    if (zone === "village"){
+      if (rnd() < .14){ const side = rnd() < .5 ? -1 : 1, c = at2(side * 34, 0); F.pois.push({ s: p.s, x: c.x, y: c.y, type: "fuel", price: (1.84 + rnd() * .14).toFixed(2).replace(".", ",") }); }
+      if (!eventPlaced && rnd() < .2){ eventPlaced = true; const c = at2((rnd() < .5 ? -1 : 1) * 60, 20); F.pois.push({ s: p.s, x: c.x, y: c.y, type: "event", text: pick(["Sortie du dimanche", "Café moto", "Balade des cols"]), sub: (8 + Math.floor(rnd() * 20)) + " inscrits" }); }
+    } else if (zone === "campagne"){
+      for (let i = 0; i < 3; i++){ const side = rnd() < .5 ? -1 : 1, w = 60 + rnd() * 90, c = at2(side * (w / 2 + 30 + rnd() * 140), (rnd() - .5) * 100); F.fields.push({ s: p.s, x: c.x, y: c.y, w, h: 50 + rnd() * 90, a: p.a + (rnd() - .5) * .6 }); }
+      if (rnd() < .08){ const c = at2((rnd() < .5 ? -1 : 1) * 30, 0); F.pois.push({ s: p.s, x: c.x, y: c.y, type: "fuel", price: (1.84 + rnd() * .14).toFixed(2).replace(".", ",") }); }
+    } else {
+      const count = zone === "col" ? 3 : 5;
+      for (let i = 0; i < count; i++){ const side = rnd() < .5 ? -1 : 1, r = 30 + rnd() * 70, c = at2(side * (r + 24 + rnd() * 220), (rnd() - .5) * 100); F.forest.push({ s: p.s, x: c.x, y: c.y, r }); }
+    }
+  }
+  function extend(){
+    if (!queue.length) plan();
+    const seg = queue[0];
+    if (!seg.started){ seg.started = true; if (seg.start) seg.start({ x: gx, y: gy, a: ga, s: gs }); }
+    const ds = Math.min(STEP, seg.len);
+    ga += seg.k * ds; gx += Math.cos(ga) * ds; gy += Math.sin(ga) * ds; gs += ds;
+    seg.len -= ds; if (seg.len <= 1e-3) queue.shift();
+    pts.push({ x: gx, y: gy, a: ga, s: gs, k: seg.k, zone, name: curName });
+    zoneLeft -= ds;
+    if (zoneLeft <= 0 && queue.length === 0){ zi = (zi + 1) % ZONES.length; zone = ZONES[zi]; zoneLeft = zone === "col" ? 1100 : zone === "village" ? 1000 + rnd() * 500 : 700 + rnd() * 600; onZone(pts[pts.length - 1]); }
+    if (pts.length % 30 === 0) decorate(pts[pts.length - 1]);
+  }
+  function at(s){
+    const i = (s - pts[0].s) / STEP, i0 = Math.max(0, Math.min(pts.length - 2, Math.floor(i))), f = Math.min(1, Math.max(0, i - i0));
+    const A = pts[i0], B = pts[i0 + 1];
+    return { x: A.x + (B.x - A.x) * f, y: A.y + (B.y - A.y) * f, a: A.a + (B.a - A.a) * f, k: A.k, zone: A.zone, name: A.name };
+  }
+
+  // départ : domicile dans sa zone de confidentialité
+  pts.push({ x: 0, y: 0, a: NORTH, s: 0, k: 0, zone, name: curName });
+  F.marks.push({ s: 0, x: 0, y: 30, r: 190, kind: "home" });
+  F.labels.push({ s: 0, x: 120, y: -40, text: TOWNS[ti++], kind: "town" });
+  while (gs < 3600) extend();
+
+  // --- trajet
+  const DESTS = ["Café du Col", "Col de l'Espigoulier", "Sortie du dimanche", "Station de Cuges", "Belvédère de la Sainte-Baume"];
+  let dest = { s: 3400, name: DESTS[0], n: 1 }, destI = 1;
+  let camS = 40, camA = NORTH, speed = 9, last = performance.now();
+  const others = []; let nextSpawn = 900, pulse = null;
+  const RIDERS = [["Léo", "Ducati Monster"], ["Inès", "Yamaha MT-07"], ["Malik", "BMW R 1250 GS"], ["Chloé", "Triumph Street Triple"], ["Hugo", "Kawasaki Z900"]];
+  let ridx = 0, invisible = true, lastVis = null;
+
+  // projection écran du point d'ancrage (carte inclinée en CSS)
+  function project(px, py){
+    const m = new DOMMatrix(getComputedStyle(cv).transform);
+    const ox = W * .5, oy = H;
+    const p = m.transformPoint(new DOMPoint(px - ox, py - oy, 0, 1));
+    return { x: p.x / p.w + ox + cv.offsetLeft, y: p.y / p.w + oy + cv.offsetTop };
+  }
+  function size(){
+    DPR = hero.offsetWidth < 900 ? .62 : .78; // calque incliné : une résolution réduite reste nette
+    W = cv.offsetWidth; H = cv.offsetHeight;
+    cv.width = W * DPR; cv.height = H * DPR;
+    const narrow = hero.offsetWidth < 900;
+    Z = narrow ? 1.35 : 1.7;
+    // centre horizontal : milieu du panneau GPS ; hauteur : juste au-dessus du bas du panneau
+    const box = UI.box.getBoundingClientRect(), hr = hero.getBoundingClientRect();
+    const cx = box.left - hr.left + box.width / 2, targetY = box.bottom - hr.top - (narrow ? 70 : 64);
+    AXF = (cx - cv.offsetLeft) / W;
+    let lo = .3, hi = .99;
+    for (let i = 0; i < 24; i++){ const mid = (lo + hi) / 2; project(W * AXF, H * mid).y < targetY ? lo = mid : hi = mid; }
+    AYF = (lo + hi) / 2;
+    const scr = project(W * AXF, H * AYF);
+    UI.cur.style.left = UI.cross.style.left = scr.x + "px";
+    UI.cur.style.top = (scr.y + 30) + "px";
+    UI.cross.style.top = (scr.y - 112) + "px";
+  }
+
+  const sprite = (r, c0, c1) => { const c = document.createElement("canvas"); c.width = c.height = r * 2; const x = c.getContext("2d"); const g = x.createRadialGradient(r, r, 0, r, r, r); g.addColorStop(0, c0); g.addColorStop(1, c1); x.fillStyle = g; x.fillRect(0, 0, r * 2, r * 2); return c; };
+  const GLOW_RIDER = sprite(24, "rgba(169,200,255,.6)", "rgba(169,200,255,0)"), GLOW_ME = sprite(48, "rgba(111,166,255,.5)", "rgba(111,166,255,0)");
+  function upcoming(){
+    for (const e of events){ if (e.s > camS - 2){ const d = e.s - camS; if (d < 2600) return { e, d }; break; } }
+    return null;
+  }
+  const ORD = { 2: "deuxième", 3: "troisième" };
+  function phrase(e){ return e.kind === "round" ? "au rond-point, prenez la " + ORD[e.exit] + " sortie" : "tournez à " + (e.dir > 0 ? "droite" : "gauche") + " sur " + e.street; }
+  const ICON = {
+    straight: "M12 20V5M6 11l6-6 6 6",
+    right: "M8 20V12a4 4 0 0 1 4-4h7M15 4l4 4-4 4",
+    left: "M16 20V12a4 4 0 0 0-4-4H5M9 4 5 8l4 4",
+    round: "M12 21v-6M12 15a4 4 0 1 1 4-4M16 11V5M13 8l3-3 3 3"
+  };
+  function fmt(m){ return m >= 1000 ? (m / 1000).toFixed(1).replace(".", ",") + " km" : Math.max(10, Math.round(m / 10) * 10) + " m"; }
+
+  function say(text){
+    if (muted || !UI.voice) return;
+    UI.voice.textContent = "« " + text.charAt(0).toUpperCase() + text.slice(1) + " »";
+    UI.voice.classList.add("on");
+    clearTimeout(say.t); say.t = setTimeout(() => UI.voice.classList.remove("on"), 2600);
+  }
+  function toast(html, ms){
+    UI.toast.innerHTML = html; UI.toast.classList.add("on");
+    clearTimeout(toast.t); toast.t = setTimeout(() => UI.toast.classList.remove("on"), ms || 4200);
+  }
+
+  const setT = (node, v) => { if (node.__v !== v){ node.__v = v; node.textContent = v; } };
+  const setD = d => { if (UI.arrow.__d !== d){ UI.arrow.__d = d; UI.arrow.setAttribute("d", d); } };
+  function updateUI(){
+    const here = at(camS), up = upcoming();
+    if (up){
+      const e = up.e;
+      setD(e.kind === "round" ? ICON.round : e.dir > 0 ? ICON.right : ICON.left);
+      setT(UI.exit, e.kind === "round" ? e.exit : ""); UI.exit.hidden = e.kind !== "round";
+      setT(UI.dist, fmt(up.d));
+      setT(UI.text, e.kind === "round" ? "Au rond-point, " + e.exit + "e sortie" : "Tournez à " + (e.dir > 0 ? "droite" : "gauche"));
+      setT(UI.street, "sur " + e.street);
+      if (up.d < 420 && !e.a1){ e.a1 = true; say("dans " + (Math.round(up.d / 50) * 50) + " mètres, " + phrase(e)); }
+      if (up.d < 70 && !e.a2){ e.a2 = true; say(phrase(e)); }
+    } else {
+      setD(ICON.straight); UI.exit.hidden = true;
+      const nxt = events.find(e => e.s > camS);
+      setT(UI.dist, nxt ? fmt(nxt.s - camS) : "3,0 km");
+      setT(UI.text, "Continuez"); setT(UI.street, "sur " + here.name);
+    }
+    setT(UI.cur, here.name);
+    setT(UI.limit, LIMIT[here.zone]);
+    const rem = Math.max(0, dest.s - camS), min = Math.max(1, Math.round(rem / 14 / 60));
+    const arr = new Date(Date.now() + min * 60000);
+    setT(UI.eta, String(arr.getHours()).padStart(2, "0") + ":" + String(arr.getMinutes()).padStart(2, "0"));
+    setT(UI.etaMin, min + " min"); setT(UI.etaKm, fmt(rem));
+    setT(UI.dest, "Étape " + dest.n + " : " + dest.name);
+    const vis = invisible ? "Invisible" : "500 m";
+    if (vis !== lastVis){ lastVis = vis; ride.visTxt = vis; }
+    const near = F.roam.filter(r => r.s > camS - 300 && r.s < camS + 900).length + others.length;
+    setT(UI.riders, showRiders ? near : "–");
+  }
+
+  function draw(){
+    const ax = W * AXF, ay = H * AYF;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    const cam = at(camS);
+    ctx.save();
+    ctx.translate(ax, ay); ctx.scale(Z, Z); ctx.rotate(NORTH - camA); ctx.translate(-cam.x, -cam.y);
+    const lo = camS - 320, hi = camS + 950, inR = f => f.s > lo && f.s < hi;
+    ctx.lineCap = "round"; ctx.lineJoin = "round";
+
+    // zone de confidentialité (domicile)
+    F.marks.forEach(m => { if (!inR({ s: m.s + 1 }) && camS > 900) return;
+      ctx.fillStyle = "rgba(47,123,255,.08)"; ctx.strokeStyle = "rgba(111,166,255,.6)"; ctx.lineWidth = 2.5; ctx.setLineDash([10, 8]);
+      ctx.beginPath(); ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.setLineDash([]);
+      upright(m.x, m.y + m.r * .55, () => { pill("Zone de confidentialité", "#6FA6FF", "#000000"); });
+      upright(m.x + 26, m.y + 46, () => { ctx.fillStyle = "#6FA6FF"; ctx.beginPath(); ctx.moveTo(-9, 1); ctx.lineTo(0, -8); ctx.lineTo(9, 1); ctx.lineTo(6, 1); ctx.lineTo(6, 9); ctx.lineTo(-6, 9); ctx.lineTo(-6, 1); ctx.closePath(); ctx.fill(); });
+    });
+    // champs, forêts
+    ctx.lineWidth = 1.5;
+    F.fields.forEach(f => { if (!inR(f)) return; ctx.save(); ctx.translate(f.x, f.y); ctx.rotate(f.a); ctx.fillStyle = "rgba(30,33,41,.6)"; ctx.fillRect(-f.w/2, -f.h/2, f.w, f.h); ctx.strokeStyle = "rgba(47,123,255,.2)"; ctx.strokeRect(-f.w/2, -f.h/2, f.w, f.h); ctx.restore(); });
+    ctx.fillStyle = "rgba(16,18,24,.85)";
+    F.forest.forEach(f => { if (!inR(f)) return; ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2); ctx.fill(); });
+    // bâtiments
+    ctx.fillStyle = "#16181E"; ctx.strokeStyle = "#2A2E37"; ctx.lineWidth = 1;
+    F.blocks.forEach(b => { if (!inR(b)) return; ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.a); ctx.fillRect(-b.w/2, -b.h/2, b.w, b.h); ctx.strokeRect(-b.w/2, -b.h/2, b.w, b.h); ctx.restore(); });
+    // réseau : rues puis routes principales, et ronds-points
+    const lines = (filter, w) => F.streets.forEach(st => { if (!inR(st) || !filter(st)) return; ctx.lineWidth = w; ctx.beginPath(); st.line.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke(); });
+    ctx.strokeStyle = "#000000"; lines(s => !s.major, 13); lines(s => s.major, 18);
+    F.rings.forEach(r => { if (!inR(r)) return; ctx.lineWidth = 16; ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2); ctx.stroke(); });
+    ctx.strokeStyle = "#262A33"; lines(s => !s.major, 9);
+    ctx.strokeStyle = "#2A2E37"; lines(s => s.major, 13);
+    F.rings.forEach(r => { if (!inR(r)) return; ctx.strokeStyle = "#2A2E37"; ctx.lineWidth = 11; ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2); ctx.stroke(); ctx.fillStyle = "rgba(20,22,28,.95)"; ctx.beginPath(); ctx.arc(r.x, r.y, r.r - 6, 0, Math.PI * 2); ctx.fill(); });
+
+    // itinéraire : chaussée, parcouru (gris), à venir (bleu)
+    const i0 = Math.max(0, Math.floor((lo - pts[0].s) / STEP)), i1 = Math.min(pts.length - 1, Math.ceil((hi - pts[0].s) / STEP));
+    const ic = Math.max(i0, Math.min(i1, Math.floor((camS - pts[0].s) / STEP)));
+    const poly = (a, b) => { ctx.beginPath(); for (let i = a; i <= b; i++){ const p = pts[i]; i === a ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y); } };
+    poly(i0, i1); ctx.strokeStyle = "#000000"; ctx.lineWidth = 22; ctx.stroke(); ctx.strokeStyle = "#2A2E37"; ctx.lineWidth = 16; ctx.stroke();
+    poly(i0, ic); ctx.strokeStyle = "#3A3F4A"; ctx.lineWidth = 7; ctx.stroke();
+    poly(ic, i1); ctx.strokeStyle = "rgba(47,123,255,.35)"; ctx.lineWidth = 24; ctx.stroke(); ctx.strokeStyle = "#2F7BFF"; ctx.lineWidth = 11; ctx.stroke();
+    // flèche de la prochaine manœuvre, posée sur la route
+    const up = upcoming();
+    if (up && up.d < 600){
+      const ia = Math.max(i0, Math.floor((up.e.s - 26 - pts[0].s) / STEP)), ib = Math.min(i1, Math.floor((up.e.s + (up.e.kind === "round" ? 60 : 30) - pts[0].s) / STEP));
+      if (ib > ia){ poly(ia, ib); ctx.strokeStyle = "#fff"; ctx.lineWidth = 5; ctx.stroke(); const B = pts[ib], A = pts[ib - 1]; const aa = Math.atan2(B.y - A.y, B.x - A.x);
+        ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.moveTo(B.x + Math.cos(aa) * 9, B.y + Math.sin(aa) * 9); ctx.lineTo(B.x + Math.cos(aa + 2.4) * 9, B.y + Math.sin(aa + 2.4) * 9); ctx.lineTo(B.x + Math.cos(aa - 2.4) * 9, B.y + Math.sin(aa - 2.4) * 9); ctx.closePath(); ctx.fill(); }
+    }
+    // étape (destination)
+    if (dest.s < hi){ const d = at(dest.s); upright(d.x, d.y, () => {
+      ctx.fillStyle = "#6FA6FF"; ctx.beginPath(); ctx.arc(0, -26, 14, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.moveTo(-6, -15); ctx.lineTo(0, -4); ctx.lineTo(6, -15); ctx.fill();
+      ctx.fillStyle = "#000000"; ctx.font = "800 15px 'Barlow Condensed', sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(dest.n, 0, -25);
+      ctx.translate(0, -56); pill("Étape " + dest.n + " : " + dest.name, "#6FA6FF", "#000000");
+    }); }
+
+    // points d'intérêt
+    F.pois.forEach(o => { if (!inR(o)) return; upright(o.x, o.y, () => {
+      if (o.type === "fuel"){
+        ctx.fillStyle = "#07122A"; ctx.strokeStyle = "#6FA6FF"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, 13, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = "#6FA6FF"; ctx.fillRect(-6, -6, 8, 12); ctx.fillRect(3, -3, 3, 8);
+        ctx.translate(0, -28); pill("SP98 " + o.price + " €", "#07122A", "#F3F5F9", "#6FA6FF");
+      } else {
+        ctx.fillStyle = "#A9C8FF"; ctx.beginPath(); ctx.arc(0, -18, 13, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.moveTo(-6, -8); ctx.lineTo(0, 2); ctx.lineTo(6, -8); ctx.fill();
+        ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.strokeRect(-6, -24, 12, 11); ctx.beginPath(); ctx.moveTo(-6, -20); ctx.lineTo(6, -20); ctx.stroke();
+        ctx.translate(0, -48); pill(o.text + " · " + o.sub, "#A9C8FF", "#fff");
+      }
+    }); });
+    // étiquettes
+    F.labels.forEach(l => { if (!inR(l)) return; upright(l.x, l.y, () => {
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      if (l.kind === "road"){ ctx.font = "700 13px Barlow, system-ui, sans-serif"; const w = ctx.measureText(l.text).width + 14; ctx.fillStyle = "#6FA6FF"; rr(-w/2, -10, w, 20, 4); ctx.fill(); ctx.fillStyle = "#000000"; ctx.fillText(l.text, 0, 1); }
+      else if (l.kind === "street"){ ctx.font = "600 12px Barlow, system-ui, sans-serif"; ctx.lineWidth = 4; ctx.strokeStyle = "rgba(0,0,0,.9)"; ctx.strokeText(l.text, 0, 0); ctx.fillStyle = "rgba(205,212,225,.85)"; ctx.fillText(l.text, 0, 0); }
+      else { ctx.font = (l.kind === "town" ? "800 24px" : "700 18px") + " 'Barlow Condensed', system-ui, sans-serif"; ctx.lineWidth = 5; ctx.strokeStyle = "rgba(0,0,0,.85)"; ctx.strokeText(l.text.toUpperCase(), 0, 0); ctx.fillStyle = l.kind === "town" ? "rgba(236,240,247,.85)" : "rgba(111,166,255,.95)"; ctx.fillText(l.text.toUpperCase(), 0, 0);
+        if (l.kind === "col"){ ctx.font = "600 13px Barlow, system-ui, sans-serif"; ctx.fillStyle = "rgba(147,160,186,.95)"; ctx.fillText("728 m", 0, 20); } }
+    }); });
+    // riders à proximité (Premium) et en sens inverse
+    const dot = (x, y) => { ctx.drawImage(GLOW_RIDER, x - 24, y - 24); ctx.fillStyle = "#A9C8FF"; ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); };
+    if (showRiders){
+      F.roam.forEach(r => { if (!inR(r)) return; const L = r.line, f = r.t * (L.length - 1), i = Math.min(L.length - 2, Math.floor(f)), u = f - i; dot(L[i][0] + (L[i + 1][0] - L[i][0]) * u, L[i][1] + (L[i + 1][1] - L[i][1]) * u); });
+      others.forEach(o => { const p = at(o.s), n = nrm(p.a); dot(p.x - n.x * 3, p.y - n.y * 3); });
+    }
+    if (pulse){
+      const k = Math.min(1, (performance.now() - pulse.t) / 1400);
+      ctx.strokeStyle = "rgba(111,166,255," + (1 - k) + ")"; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(pulse.x, pulse.y, 10 + k * 70, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(pulse.x, pulse.y, 6 + k * 40, 0, Math.PI * 2); ctx.stroke();
+      if (k >= 1) pulse = null;
+    }
+    ctx.restore();
+
+    // le rider : flèche de position, cap en haut
+    ctx.save(); ctx.translate(ax, ay);
+    ctx.drawImage(GLOW_ME, -48, -48);
+    ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#2F7BFF"; ctx.beginPath(); ctx.moveTo(0, -12); ctx.lineTo(10, 10); ctx.lineTo(0, 4); ctx.lineTo(-10, 10); ctx.closePath(); ctx.fill();
+    ctx.restore();
+
+    function upright(x, y, fn){ ctx.save(); ctx.translate(x, y); ctx.rotate(camA - NORTH); ctx.scale(1 / Z, 1 / Z); fn(); ctx.restore(); }
+    function rr(x, y, w, h, r){ ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+    function pill(text, bg, fg, border){ ctx.font = "700 12px Barlow, system-ui, sans-serif"; const w = ctx.measureText(text).width + 18; ctx.fillStyle = bg; rr(-w/2, -11, w, 22, 11); ctx.fill(); if (border){ ctx.strokeStyle = border; ctx.lineWidth = 1.5; ctx.stroke(); } ctx.fillStyle = fg; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(text, 0, 1); }
+  }
+
+  step.n = 0;
+  function step(dt){
+    let kmax = 0;
+    for (let s = camS; s < camS + 70; s += 6) kmax = Math.max(kmax, Math.abs(at(s).k));
+    const here = at(camS);
+    const target = Math.min(LIMIT[here.zone] / 3.6, kmax ? Math.sqrt(3.4 / kmax) : 99);
+    speed += (target - speed) * Math.min(1, dt * (target < speed ? 1.8 : .8));
+    const TIME = 2.2; // le temps de la simulation passe plus vite
+    camS += speed * dt * TIME; ride.dist += speed * dt * TIME;
+    const da = at(camS + 10).a - camA; camA += da * Math.min(1, dt * 3.4);
+    while (pts[pts.length - 1].s < camS + 2300) extend();
+    if (pts[0].s < camS - 800){ pts.splice(0, Math.floor((camS - 800 - pts[0].s) / STEP)); }
+    if ((++step.n % 40) === 0) for (const key in F){ if (key === "marks") continue; const arr = F[key], cut = camS - 800; let j = 0; for (let i = 0; i < arr.length; i++) if (arr[i].s >= cut) arr[j++] = arr[i]; arr.length = j; }
+    while (events.length && events[0].s < camS - 50) events.shift();
+    F.roam.forEach(r => { r.t += r.v * dt; if (r.t > 1 || r.t < 0){ r.v = -r.v; r.t = Math.max(0, Math.min(1, r.t)); } });
+    // motards en face : croisement
+    if (ride.dist > nextSpawn){ others.push({ s: camS + 1000, v: 14, crossed: false, who: RIDERS[ridx++ % RIDERS.length] }); nextSpawn = ride.dist + 1500 + rnd() * 1500; }
+    for (let i = others.length - 1; i >= 0; i--){
+      const o = others[i]; o.s -= o.v * dt * TIME;
+      if (!o.crossed && o.s <= camS){ o.crossed = true; const p = at(camS); pulse = { x: p.x, y: p.y, t: performance.now() }; crossToast(o.who); }
+      if (o.s < camS - 400) others.splice(i, 1);
+    }
+    // zone de confidentialité
+    const home = F.marks[0], inside = Math.hypot(here.x - home.x, here.y - home.y) < home.r;
+    if (invisible && !inside){ invisible = false; toast("<b>Sortie de la zone de confidentialité.</b> Votre position est de nouveau visible, avec une précision de 500 m."); }
+    // étape atteinte
+    if (camS >= dest.s){ toast("<b>Étape " + dest.n + " atteinte : " + dest.name + ".</b> Guidage vers l'étape suivante."); dest = { s: camS + 2600 + rnd() * 1800, name: DESTS[destI++ % DESTS.length], n: dest.n + 1 }; }
+    ride.speed = speed * 3.6;
+    ride.heading = ((camA - NORTH) * 180 / Math.PI % 360 + 360) % 360;
+    ride.lean = Math.atan(speed * speed * here.k / 9.81) * 180 / Math.PI;
+    ride.visible = !invisible;
+  }
+  function crossToast(who){
+    UI.cross.querySelector("b").textContent = "Croisement : " + who[0];
+    UI.cross.querySelector("span").textContent = who[1] + ", enregistré dans vos croisements";
+    UI.cross.classList.add("on"); clearTimeout(crossToast.t); crossToast.t = setTimeout(() => UI.cross.classList.remove("on"), 3200);
+  }
+
+  // --- boutons de l'écran GPS
+  $id("gSos").addEventListener("click", () => toast("<b>Alerte SOS :</b> dans l'application, le bouton lance un décompte de 10 secondes, puis votre position exacte est transmise aux membres IzenRide à proximité. <a href=\"#securite\">Voir la démonstration</a>", 6500));
+  $id("gShare").addEventListener("click", () => toast("<b>Lien de suivi créé (démonstration).</b> Vos proches peuvent suivre votre position, votre vitesse et votre heure d'arrivée, sans application. Valable 24 heures, code 4 8 2 1 9.", 6000));
+  const vb = $id("gVoiceBtn");
+  vb.addEventListener("click", () => { muted = !muted; vb.setAttribute("aria-pressed", String(!muted)); $id("gVoiceIco").setAttribute("d", muted ? "M11 5 6 9H3v6h3l5 4V5ZM22 9l-6 6M16 9l6 6" : "M11 5 6 9H3v6h3l5 4V5ZM15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"); toast(muted ? "<b>Guidage vocal désactivé.</b> Les instructions restent affichées." : "<b>Guidage vocal activé.</b> Disponible dans les 9 langues de l'application."); if (muted) UI.voice.classList.remove("on"); });
+  const lb = $id("gLayers");
+  lb.addEventListener("click", () => { showRiders = !showRiders; lb.setAttribute("aria-pressed", String(showRiders)); toast(showRiders ? "<b>Riders à proximité affichés.</b> Fonction incluse dans l'abonnement Premium." : "<b>Riders à proximité masqués.</b>"); });
+
+  let frame = 0;
+  function loop(now){
+    const el = now - last;
+    if (el >= 31){ // ~30 images par seconde suffisent pour une carte qui défile
+      const dt = Math.min(.08, el / 1000); last = now;
+      if (visible && !document.hidden){ step(dt); draw(); if ((++frame % 6) === 0) updateUI(); updateCluster(); }
+    }
+    requestAnimationFrame(loop);
+  }
+  size();
+  addEventListener("resize", () => { size(); draw(); });
+  addEventListener("load", size);
+  if (document.fonts) document.fonts.ready.then(size);
+  setTimeout(size, 600);
+  new IntersectionObserver(e => visible = e[0].isIntersecting).observe(hero);
+  if (REDUCE){ camS = 260; step(.016); speed = 0; ride.speed = 0; draw(); updateUI(); updateCluster(); return; }
+  requestAnimationFrame(t => { last = t; loop(t); });
+})();
+
+const $ = id => document.getElementById(id);
+const el = { spd: $("spd"), cap: $("cap"), lean: $("lean"), km: $("km"), arc: $("gaugeArc"), vis: $("visV") };
+const CARDINAL = ["N","NE","E","SE","S","SO","O","NO"];
+function updateCluster(){
+  const set = (k, v, html) => { if (updateCluster[k] !== v){ updateCluster[k] = v; html ? (el[k].innerHTML = v) : (el[k].textContent = v); } };
+  const s = Math.round(ride.speed);
+  set("spd", s);
+  if (updateCluster.arcV !== s){ updateCluster.arcV = s; el.arc.setAttribute("stroke-dashoffset", (100 - Math.min(100, s / 130 * 100)).toFixed(1)); }
+  const h = Math.round(ride.heading) % 360;
+  set("cap", CARDINAL[Math.round(h / 45) % 8] + " " + String(h).padStart(3, "0") + "°");
+  const lean = Math.round(ride.lean);
+  set("lean", (lean > 0 ? "D " : lean < 0 ? "G " : "") + Math.abs(lean) + "°");
+  set("km", (ride.dist / 1000).toFixed(1).replace(".", ",") + "<i>km</i>", true);
+  set("vis", ride.visible ? "500 m" : "Invisible");
+}
+
+/* ===== En-tête, progression, bandeau GPS ===== */
+(function nav(){
+  const top = $("top"), bar = $("progress");
+  const steps = [...document.querySelectorAll("main > section[data-step]")];
+  const links = [...document.querySelectorAll(".nav a")];
+  const turns = ["M12 20V5M6 11l6-6 6 6", "M8 20V12a4 4 0 0 1 4-4h7M15 4l4 4-4 4", "M16 20V12a4 4 0 0 0-4-4H5M9 4 5 8l4 4"];
+  let tops = [], maxY = 0, ticking = false;
+  const measure = () => { tops = steps.map(s => s.offsetTop); maxY = document.documentElement.scrollHeight - innerHeight; };
+  measure(); addEventListener("resize", measure); addEventListener("load", measure); setTimeout(measure, 1500);
+  function onScroll(){
+    const y = scrollY, max = maxY;
+    ride.vel += (y - ride.lastY); ride.lastY = y;
+    top.classList.toggle("solid", y > 40);
+    bar.style.transform = "scaleX(" + (max > 0 ? y / max : 0) + ")";
+    const probe = y + innerHeight * .35;
+    let cur = 0; tops.forEach((t, i) => { if (t <= probe) cur = i; });
+    links.forEach(a => a.classList.toggle("here", a.getAttribute("href") === "#" + steps[cur].id));
+    if (REDUCE) updateCluster();
+  }
+  addEventListener("scroll", () => { if (!ticking){ ticking = true; requestAnimationFrame(() => { ticking = false; onScroll(); }); } }, { passive: true });
+  onScroll();
+})();
+
+/* ===== Croisement : carte + carnet ===== */
+(function crossing(){
+  if (!document.getElementById("mapcard")) return;
+  const card = $("mapcard"), cv = $("xmap"), ctx = cv.getContext("2d"), log = $("logbook"), count = $("xcount");
+  const RIDERS = [
+    { n: "Léo", c: "#A9C8FF", m: "Ducati Monster", p: "Croisement à 300 m, D2 Gémenos" },
+    { n: "Inès", c: "#6FA6FF", m: "Yamaha MT-07", p: "Même route, Col de l'Espigoulier" },
+    { n: "Malik", c: "#6FA6FF", m: "BMW R 1250 GS", p: "Même endroit, Route des Crêtes" },
+    { n: "Chloé", c: "#2F7BFF", m: "Triumph Street Triple", p: "3 fois sur la même route" },
+    { n: "Hugo", c: "#6FA6FF", m: "Kawasaki Z900", p: "Croisement à 450 m, Corniche Kennedy" }
+  ];
+  let W, H, roads = [], streets = [], X, visible = false, idx = 0, n = 12;
+  function bez(p, t){ const u = 1 - t; return { x: u*u*u*p[0].x + 3*u*u*t*p[1].x + 3*u*t*t*p[2].x + t*t*t*p[3].x, y: u*u*u*p[0].y + 3*u*u*t*p[1].y + 3*u*t*t*p[2].y + t*t*t*p[3].y }; }
+  function size(){
+    const r = card.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 1.5);
+    W = r.width; H = r.height; cv.width = W*dpr; cv.height = H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+    X = { x: W * .52, y: H * .38 };
+    roads = [
+      [{x:-20,y:H*.75},{x:W*.2,y:H*.6},{x:X.x-W*.2,y:X.y+H*.12},X],
+      [{x:W+20,y:H*.12},{x:W*.85,y:H*.2},{x:X.x+W*.15,y:X.y-H*.1},X]
+    ];
+    let seed = 7; const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+    streets = [];
+    for (let i = 0; i < 16; i++){
+      const a = {x: rnd()*W, y: rnd()*H}, b = {x: rnd()*W, y: rnd()*H};
+      streets.push([a, {x: a.x + (rnd()-.5)*W*.6, y: a.y + (rnd()-.5)*H*.6}, {x: b.x + (rnd()-.5)*W*.6, y: b.y + (rnd()-.5)*H*.6}, b, rnd() > .7]);
+    }
+  }
+  function curve(p, color, w){ ctx.beginPath(); ctx.moveTo(p[0].x,p[0].y); ctx.bezierCurveTo(p[1].x,p[1].y,p[2].x,p[2].y,p[3].x,p[3].y); ctx.strokeStyle = color; ctx.lineWidth = w; ctx.stroke(); }
+  function base(){ // le fond de carte est dessiné une fois, puis recopié
+    const key = cv.width + "x" + cv.height;
+    if (base.key !== key){
+      ctx.clearRect(0,0,W,H);
+      ctx.lineCap = "round";
+      streets.forEach(s => curve(s, s[4] ? "#1E2129" : "#16181E", s[4] ? 6 : 3));
+      roads.forEach(p => { curve(p, "#1E2129", 16); curve(p, "#2A2E37", 8); });
+      base.c = document.createElement("canvas"); base.c.width = cv.width; base.c.height = cv.height;
+      base.c.getContext("2d").drawImage(cv, 0, 0); base.key = key; return;
+    }
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); ctx.drawImage(base.c, 0, 0); ctx.restore();
+  }
+  function rider(p, t, color){
+    for (let k = 0; k < 22; k++){
+      const tt = t - k * .012; if (tt < 0) break;
+      const q = bez(p, tt); ctx.globalAlpha = (1 - k/22) * .8;
+      ctx.fillStyle = color; ctx.beginPath(); ctx.arc(q.x, q.y, 4 - k*.12, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    const h = bez(p, t), g = ctx.createRadialGradient(h.x,h.y,0,h.x,h.y,30);
+    g.addColorStop(0, color); g.addColorStop(1, "transparent");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(h.x,h.y,30,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(h.x,h.y,4.5,0,Math.PI*2); ctx.fill();
+  }
+  function addEntry(animate){
+    const r = RIDERS[idx % RIDERS.length]; idx++;
+    const d = new Date(Date.now() - (animate ? 0 : (3 - idx) * 26 * 60000));
+    const row = document.createElement("div"); row.className = "entry";
+    if (!animate) row.style.animation = "none";
+    row.innerHTML = '<span class="av"></span><div><b></b><span></span></div><time></time>';
+    row.querySelector(".av").style.background = r.c; row.querySelector(".av").textContent = r.n[0];
+    row.querySelector("b").textContent = r.n + " · " + r.m;
+    row.querySelector(".entry > div > span").textContent = r.p;
+    row.querySelector("time").textContent = String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0");
+    log.prepend(row);
+    while (log.children.length > (W < 420 ? 2 : 3)) log.lastChild.remove();
+  }
+  size(); addEventListener("resize", () => { size(); base(); });
+  addEntry(false); addEntry(false); addEntry(false);
+  const cols = [tok("--glow"), tok("--trail")];
+  if (REDUCE){ base(); roads.forEach((p,i) => rider(p, 1, cols[i])); return; }
+  new IntersectionObserver(e => visible = e[0].isIntersecting).observe(card);
+  const RIDE = 3400, HOLD = 1600; let start = null, fired = false;
+  function tick(now){
+    if (now - (tick.l || 0) < 31){ requestAnimationFrame(tick); return; } tick.l = now;
+    if (start === null) start = now;
+    const e = (now - start) % (RIDE + HOLD);
+    if (visible && !document.hidden){
+      base();
+      if (e < RIDE){ fired = false; const t = e / RIDE; const ease = t < .5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2; roads.forEach((p,i) => rider(p, ease, cols[i])); }
+      else {
+        const k = (e - RIDE) / HOLD;
+        roads.forEach((p,i) => { ctx.globalAlpha = 1 - k; rider(p, 1, cols[i]); });
+        ctx.globalAlpha = 1 - k; ctx.strokeStyle = cols[0]; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.arc(X.x, X.y, 10 + k*70, 0, Math.PI*2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(X.x, X.y, 6 + k*40, 0, Math.PI*2); ctx.stroke();
+        ctx.globalAlpha = 1;
+        if (!fired){ fired = true; n++; count.textContent = n; addEntry(true); }
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+
+/* ===== SOS : démonstration du décompte ===== */
+(function sos(){
+  const btn = $("sosBtn"), ring = $("sosRing"), lbl = $("sosLbl"), sub = $("sosSub"), msg = $("sosMsg"), cancel = $("sosCancel");
+  let timer = null, left = 0;
+  function reset(text){
+    clearInterval(timer); timer = null;
+    btn.classList.remove("counting"); ring.style.transition = "none"; ring.setAttribute("stroke-dashoffset", "100");
+    lbl.textContent = "SOS"; sub.textContent = "Démonstration"; cancel.hidden = true; msg.textContent = text;
+  }
+  btn.addEventListener("click", () => {
+    if (timer) return;
+    left = 10; btn.classList.add("counting"); cancel.hidden = false;
+    lbl.textContent = left; sub.textContent = "secondes";
+    msg.textContent = "Décompte en cours. Appuyez sur « Je vais bien » pour annuler.";
+    ring.style.transition = "none"; ring.setAttribute("stroke-dashoffset", "100");
+    requestAnimationFrame(() => { ring.style.transition = "stroke-dashoffset 10s linear"; ring.setAttribute("stroke-dashoffset", "0"); });
+    timer = setInterval(() => {
+      left--; lbl.textContent = left;
+      if (left <= 0){ reset("Fin de la démonstration. Dans l'application, votre position exacte serait maintenant transmise aux membres IzenRide à proximité. Vos contacts d'urgence peuvent ensuite être appelés directement."); lbl.textContent = "SOS"; }
+    }, 1000);
+  });
+  cancel.addEventListener("click", () => { reset("Alerte annulée. Rien n'a été envoyé."); btn.focus(); });
+})();
+
+/* ===== Précision de la position ===== */
+(function precision(){
+  const btns = [...document.querySelectorAll(".seg button")], halo = $("precHalo"), dot = $("precDot");
+  btns.forEach(b => b.addEventListener("click", () => {
+    btns.forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+    const r = +b.dataset.r;
+    halo.setAttribute("r", r || 1); halo.style.opacity = r ? 1 : 0; dot.style.opacity = r ? 1 : 0;
+    $("precT").textContent = b.dataset.t; $("precD").textContent = b.dataset.d;
+  }));
+})();
+
+/* ===== Message vocal : barres ===== */
+(function(){ const b = document.getElementById("bars"); if (!b) return;
+  [6,12,18,9,14,20,11,7,16,10,18,8,13,6,10,15,7].forEach(h => { const i = document.createElement("i"); i.style.height = h + "px"; b.appendChild(i); });
+})();
+
+/* ===== Carrousel d'écrans ===== */
+(function carousel(){
+  const box = $("carousel"), chips = $("chips");
+  let cur = 0;
+  const items = SCREENS.map((s, i) => {
+    const it = document.createElement("div"); it.className = "item";
+    it.innerHTML = '<div class="phone"><img decoding="async" width="540" height="1104"></div>';
+    const img = it.querySelector("img"); img.src = "assets/screens/" + s.file; img.alt = "Écran " + s.name + " : " + s.desc;
+    it.addEventListener("click", () => go(i));
+    box.appendChild(it);
+    const c = document.createElement("button"); c.type = "button"; c.textContent = s.name;
+    c.addEventListener("click", () => go(i)); chips.appendChild(c);
+    return it;
+  });
+  const chipBtns = [...chips.children];
+  function go(i){
+    cur = (i + SCREENS.length) % SCREENS.length;
+    const narrow = innerWidth < 700;
+    items.forEach((it, j) => {
+      let d = j - cur;
+      if (d > SCREENS.length / 2) d -= SCREENS.length;
+      if (d < -SCREENS.length / 2) d += SCREENS.length;
+      const a = Math.abs(d);
+      const x = d * (narrow ? 58 : 72), rot = Math.max(-50, Math.min(50, -d * 32));
+      it.style.transform = "translateX(" + x + "%) translateZ(" + (-a * 160) + "px) rotateY(" + rot + "deg)";
+      it.style.opacity = a > 3 ? 0 : 1 - a * .18;
+      it.style.zIndex = 10 - a;
+      it.style.pointerEvents = a > 3 ? "none" : "auto";
+      it.classList.toggle("cur", d === 0);
+      it.setAttribute("aria-hidden", d === 0 ? "false" : "true");
+    });
+    chipBtns.forEach((c, j) => c.setAttribute("aria-current", j === cur ? "true" : "false"));
+    $("capName").textContent = SCREENS[cur].name;
+    $("capDesc").textContent = SCREENS[cur].desc;
+    $("capCount").textContent = (cur + 1) + " / " + SCREENS.length;
+  }
+  $("prevB").addEventListener("click", () => go(cur - 1));
+  $("nextB").addEventListener("click", () => go(cur + 1));
+  box.addEventListener("keydown", e => {
+    if (e.key === "ArrowRight"){ e.preventDefault(); go(cur + 1); }
+    if (e.key === "ArrowLeft"){ e.preventDefault(); go(cur - 1); }
+  });
+  let sx = null;
+  box.addEventListener("pointerdown", e => { sx = e.clientX; });
+  addEventListener("pointerup", e => {
+    if (sx === null) return;
+    const dx = e.clientX - sx; sx = null;
+    if (Math.abs(dx) > 40) go(cur + (dx < 0 ? 1 : -1));
+  });
+  addEventListener("resize", () => go(cur));
+  go(0);
+})();
+
+/* ===== Loupe : agrandissement des écrans au survol, plein écran au clic ===== */
+(function zoom(){
+  const peek = document.getElementById("zoomPeek"), box = document.getElementById("zoomBox");
+  const pImg = peek.querySelector("img"), pCap = peek.querySelector("figcaption");
+  const bImg = box.querySelector("img"), bCap = box.querySelector("figcaption");
+  const canHover = matchMedia("(hover: hover) and (pointer: fine)").matches;
+  let lastFocus = null, hideT = null;
+  const label = img => (img.alt || "").replace(/^Écran\s*/, "");
+  const target = el => {
+    const img = el.closest(".phone") && el.closest(".phone").querySelector("img");
+    if (!img || el.closest(".zoom-peek") || el.closest(".zoom-box")) return null;
+    if (el.closest(".carousel") && !el.closest(".item.cur")) return null; // dans le carrousel : seulement l'écran central
+    return img;
+  };
+  function mark(){ document.querySelectorAll(".phone img").forEach(i => { i.classList.add("zoomable"); const ph = i.closest(".phone"); if (!ph.hasAttribute("tabindex")){ ph.tabIndex = 0; ph.setAttribute("role","button"); ph.setAttribute("aria-label","Agrandir : " + label(i)); } }); }
+  function place(img, x){
+    const r = img.getBoundingClientRect(), vw = innerWidth, h = Math.round(Math.min(innerHeight * .7, 640, Math.max(r.height * 1.4, 460))), w = h * 540 / 1104, gap = 28;
+    peek.style.height = h + "px";
+    let left = (r.left + r.width / 2 < vw / 2) ? r.right + gap : r.left - gap - w;
+    if (left < 16 || left + w > vw - 16) left = Math.max(16, Math.min(vw - w - 16, (x ?? vw / 2) > vw / 2 ? 24 : vw - w - 24));
+    peek.style.left = left + "px";
+  }
+  if (canHover){
+    document.addEventListener("pointerover", e => {
+      const img = target(e.target); if (!img) return;
+      clearTimeout(hideT);
+      if (pImg.src !== img.currentSrc){ pImg.src = img.currentSrc || img.src; pCap.textContent = label(img); }
+      place(img, e.clientX); peek.classList.add("on");
+    });
+    document.addEventListener("pointerout", e => {
+      if (!target(e.target)) return;
+      if (e.relatedTarget && target(e.relatedTarget) === target(e.target)) return;
+      hideT = setTimeout(() => peek.classList.remove("on"), 60);
+    });
+    addEventListener("scroll", () => peek.classList.remove("on"), { passive: true });
+  }
+  function open(img){
+    peek.classList.remove("on"); lastFocus = document.activeElement;
+    bImg.src = img.currentSrc || img.src; bImg.alt = img.alt; bCap.textContent = label(img);
+    box.hidden = false; document.getElementById("zoomClose").focus();
+  }
+  function close(){ box.hidden = true; if (lastFocus) lastFocus.focus(); }
+  document.addEventListener("click", e => {
+    if (e.target.closest(".zoom-box")){ if (e.target.closest("figure img")) return; close(); return; }
+    const img = target(e.target); if (img){ e.preventDefault(); open(img); }
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && !box.hidden) close();
+    if ((e.key === "Enter" || e.key === " ") && e.target.classList && e.target.classList.contains("phone")){ const img = target(e.target.querySelector("img")); if (img){ e.preventDefault(); open(img); } }
+  });
+  mark(); setTimeout(mark, 800);
+})();
+</script>
+</body>
+</html>

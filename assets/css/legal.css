@@ -1,0 +1,64 @@
+/* Pages légales IzenRide : noir et bleu, lecture confortable */
+:root{--night:#000;--asphalt:#0A0A0C;--deck:#111216;--line:#1E2129;--ink:#F3F5F9;--mute:#8D94A3;--signal:#2F7BFF;--glow:#6FA6FF;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--night);color:var(--ink);font:400 1.0625rem/1.7 var(--body);-webkit-font-smoothing:antialiased}
+a{color:var(--glow)}
+:focus-visible{outline:2px solid var(--glow);outline-offset:3px;border-radius:4px}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:rgba(0,0,0,.96);border-bottom:1px solid var(--line)}
+.top .wrap{max-width:1240px;margin:0 auto;padding-inline:clamp(16px,4vw,44px);height:64px;display:flex;align-items:center;gap:20px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);font:700 1.25rem/1 var(--body);letter-spacing:-.01em}
+.brand img{width:32px;height:32px;border-radius:50%}
+.brand b{color:var(--glow)}
+.top nav{margin-left:auto;display:flex;gap:20px;font-size:.95rem}
+.top nav a{color:var(--mute);text-decoration:none}
+.top nav a:hover,.top nav a[aria-current="page"]{color:var(--ink)}
+.doc-page{padding-inline:clamp(16px,4vw,44px);padding-block:56px 96px}
+.doc{max-width:760px;margin:0 auto}
+.doc__head{display:grid;gap:14px;padding-bottom:28px;border-bottom:1px solid var(--line)}
+.doc__pill{justify-self:start;padding:4px 10px;border-radius:8px;border:1px solid color-mix(in srgb,var(--glow) 50%,transparent);color:var(--glow);font-size:.82rem;font-weight:600}
+.doc__title{margin:0;font:700 clamp(2rem,4.4vw,2.9rem)/1.08 var(--body);letter-spacing:-.025em;text-wrap:balance}
+.doc__sub{margin:0;color:var(--mute)}
+.doc__meta{display:flex;flex-wrap:wrap;gap:10px 28px;font-size:.92rem}
+.doc__meta span{display:grid;gap:2px}
+.doc__meta b{font-weight:500;color:var(--mute);font-size:.8rem}
+.doc__meta i{font-style:normal;font-weight:600}
+.toc{margin:32px 0 8px;padding:20px 24px;border:1px solid var(--line);border-radius:14px;background:var(--asphalt)}
+.toc h2{margin:0 0 10px;font:600 .82rem/1 var(--body);color:var(--mute);letter-spacing:.08em;text-transform:uppercase}
+.toc ol{margin:0;padding-left:1.3em;columns:2;column-gap:32px;font-size:.98rem}
+.toc li{break-inside:avoid;padding:2px 0}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a:hover{color:var(--glow)}
+@media (max-width:560px){.toc ol{columns:1}}
+.doc > article{padding-top:36px;scroll-margin-top:80px}
+.doc > article h3{margin:0 0 14px;font:600 1.45rem/1.2 var(--body);letter-spacing:-.015em;display:grid;gap:6px}
+.art-num{font:600 .8rem/1 var(--body);color:var(--glow);letter-spacing:.06em;text-transform:uppercase}
+.doc h4{margin:22px 0 6px;font:600 1.05rem/1.3 var(--body)}
+.doc p{margin:0 0 14px;color:#D3D8E2}
+.callout{margin:18px 0;padding:14px 18px;border-left:3px solid var(--signal);background:var(--deck);border-radius:0 10px 10px 0;color:#D3D8E2;font-size:.98rem}
+.callout b{display:block;color:var(--ink);margin-bottom:4px}
+.callout--warn,.callout--critical{border-left-color:var(--glow)}
+.callout--ok{border-left-color:#3E5F99}
+.info-card{width:100%;border-collapse:collapse;margin:14px 0 18px;border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:.98rem}
+.info-card th,.info-card td{padding:12px 16px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.info-card tr:last-child th,.info-card tr:last-child td{border-bottom:none}
+.info-card th{width:36%;color:var(--mute);font-weight:500;background:var(--asphalt)}
+.mono{font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.doc__foot{margin-top:48px;padding-top:28px;border-top:1px solid var(--line);font-size:.95rem}
+.doc__foot-meta{display:flex;flex-wrap:wrap;gap:8px 28px;margin-bottom:24px;color:var(--mute)}
+.doc__foot-meta b{color:var(--ink);font-weight:600}
+.doc__foot h2{margin:0 0 10px;font:600 1.1rem/1.3 var(--body)}
+.doc__foot ul{margin:0 0 18px;padding-left:1.1em;color:#C3C9D4;display:grid;gap:8px}
+.doc__foot em{color:var(--glow);font-style:normal}
+.doc__foot p{color:var(--mute);font-size:.9rem}
+.doc__cross{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+.btn{display:inline-flex;align-items:center;min-height:46px;padding:0 20px;border-radius:12px;border:1px solid var(--line);color:var(--ink);text-decoration:none;font-weight:600}
+.btn:hover{border-color:var(--glow)}
+.btn--primary{background:var(--signal);border-color:var(--signal)}
+.site-foot{border-top:1px solid var(--line);padding:32px clamp(16px,4vw,44px);color:var(--mute);font-size:.9rem}
+.site-foot .wrap{max-width:1240px;margin:0 auto;display:flex;flex-wrap:wrap;gap:10px 22px;justify-content:space-between}
+.site-foot a{color:var(--mute);text-decoration:none}
+.site-foot a:hover{color:var(--ink)}
+.site-foot nav{display:flex;flex-wrap:wrap;gap:8px 20px}
+@media (max-width:640px){.top nav a:not([aria-current="page"]){display:none}}
