@@ -1,0 +1,43 @@
+# IzenRide – configuration Apache (hébergement OVH)
+Options -Indexes
+ErrorDocument 404 /404.html
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+
+# Dossier Git et fichiers techniques : jamais servis
+RewriteRule (^|/)\.(git|gitattributes|gitignore)(/|$) - [R=404,L]
+
+# Une seule adresse : https://izenride.fr (sans www, en HTTPS)
+RewriteCond %{SERVER_PORT} ^80$ [OR]
+RewriteCond %{HTTP_HOST} !^izenride\.fr$ [NC]
+RewriteRule ^(.*)$ https://izenride.fr/$1 [R=301,L]
+
+# /index.html -> /
+RewriteCond %{THE_REQUEST} \s/index\.html[\s?] [NC]
+RewriteRule ^index\.html$ https://izenride.fr/ [R=301,L]
+</IfModule>
+
+<IfModule mod_headers.c>
+Header always set X-Content-Type-Options "nosniff"
+Header always set X-Frame-Options "SAMEORIGIN"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+Header always set Strict-Transport-Security "max-age=15552000"
+Header always set Content-Security-Policy "default-src 'self'; script-src 'self' https://izeninfo.fr; connect-src 'self' https://izeninfo.fr; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests"
+
+# Cache : ressources versionnées 1 an, pages HTML 5 minutes
+<FilesMatch "\.(css|js|woff2|webp|jpe?g|png|ico|svg)$">
+Header set Cache-Control "public, max-age=31536000, immutable"
+</FilesMatch>
+<FilesMatch "\.(html|xml|txt)$">
+Header set Cache-Control "public, max-age=300, must-revalidate"
+</FilesMatch>
+</IfModule>
+
+<IfModule mod_deflate.c>
+AddOutputFilterByType DEFLATE text/html text/css application/javascript text/javascript application/json image/svg+xml text/xml text/plain
+</IfModule>
+
+AddType font/woff2 .woff2
+AddType image/webp .webp
