@@ -666,3 +666,14 @@ h3{font-family:var(--body);font-weight:600;font-size:1.3rem;letter-spacing:-.01e
   html{scroll-behavior:auto}
   *,*::before,*::after{animation:none!important;transition:none!important}
 }
+
+/* ===== Boutons (décision du 21/10/2026, CHARTE §6) : style badge store =====
+   Principal : fond noir, liseré clair line.bright ; secondaire : liseré line.strong.
+   « Télécharger » de l'en-tête : transparent, halo brand.night. */
+.btn{transition:transform .15s,border-color .15s,background .15s}
+.btn-primary,.btn-primary:hover{background:#000;color:#fff;border:1.5px solid #E6E9EF;box-shadow:none}
+.btn-primary:hover{transform:translateY(-2px);border-color:#fff}
+.btn-ghost{background:#000;border:1.5px solid #2A2E37;color:var(--ink)}
+.btn-ghost:hover{transform:translateY(-2px);border-color:#8D94A3}
+.top .btn-primary,.top .btn-primary:hover{background:transparent;box-shadow:0 0 22px 6px #0A1735}
+@media (prefers-reduced-motion:reduce){.btn:hover{transform:none}}
