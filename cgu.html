@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Conditions générales d'utilisation — IzenRide</title>
-<meta name="description" content="Conditions générales d'utilisation de l'application IzenRide, éditée par IZEN RIDE SAS.">
+<meta name="description" content="Conditions générales d'utilisation de l'application IzenRide (v4.5, en vigueur au 1er octobre 2026).">
 <meta name="theme-color" content="#000000">
 <link rel="canonical" href="https://izenride.fr/cgu.html">
 <link rel="icon" href="/favicon.ico" sizes="any">
@@ -34,8 +34,8 @@
     <h1 class="doc__title">Conditions générales d'utilisation</h1>
     <p class="doc__sub">Document légal</p>
     <div class="doc__meta">
-      <span><b>Version</b><i>v4.2</i></span>
-      <span><b>Dernière mise à jour</b><i>29 août 2026</i></span>
+      <span><b>Version</b><i>v4.5</i></span>
+      <span><b>Dernière mise à jour</b><i>1er octobre 2026</i></span>
       <span><b>Droit applicable</b><i>FR/UE</i></span>
       <span><b>Lecture</b><i>~12 min</i></span>
     </div>
@@ -51,6 +51,7 @@
       <li><a href="#premium">Premium</a></li>
       <li><a href="#donnees">Données</a></li>
       <li><a href="#comportements">Comportements</a></li>
+      <li><a href="#signalement-moderation">Signalement</a></li>
       <li><a href="#responsabilite">Responsabilité</a></li>
       <li><a href="#litiges">Litiges</a></li>
     </ol>
@@ -71,7 +72,12 @@
     <p>L'Application est actuellement proposée en version bêta. Les fonctionnalités sont susceptibles d'évoluer, d'être modifiées ou retirées sans préavis, et la disponibilité du service n'est pas garantie.</p>
     <div class="callout callout--warn">
       <b>Version de test</b>
-      Pendant la phase de bêta, certaines données peuvent être réinitialisées et certains parcours (vérification de profil, paiements) fonctionnent en mode simplifié. L'abonnement Premium se souscrit, lui, exclusivement via l'App Store ou Google Play (voir les <a href="cgv.html">CGV</a>).
+      <!-- 🔴 LA SECONDE PHRASE DISAIT QUE LE PREMIUM ÉTAIT OFFERT PENDANT LA
+           BÊTA. Retirée le 2026-08-29, même motif que dans `cgv.html` : Apple,
+           guideline 3.1.1. Texte v4.5 de cgu.ts : l'app y écrit le nom de la
+           boutique de l'appareil ; une page web ne le connaît pas, d'où les
+           deux noms (même rendu que le miroir /legal/cgu). -->
+      Pendant la phase de bêta, certaines données peuvent être réinitialisées et certains parcours (vérification de profil) fonctionnent en mode simplifié. L'abonnement Premium se souscrit via l'App Store ou Google Play (voir les <a href="cgv.html">CGV</a>).
     </div>
   </article>
 
@@ -100,12 +106,12 @@
     <h4>4.1 Sorties et événements</h4>
     <p>Les sorties et événements sont proposés et organisés par les membres eux-mêmes. IZEN RIDE n'est pas l'organisateur de ces événements et n'assume aucune obligation quant à leur déroulement. Chaque participant roule sous sa propre responsabilité, avec un véhicule assuré et en respectant la réglementation.</p>
     <h4>4.2 Alerte SOS</h4>
-    <p>La fonction SOS permet d'alerter des membres à proximité et vos contacts d'urgence. C'est un dispositif communautaire d'entraide : il ne remplace en aucun cas les services de secours. En cas d'urgence, appelez le 112.</p>
+    <p>La fonction SOS permet d'alerter des membres à proximité et d'afficher vos contacts d'urgence pour que vous les appeliez. C'est un dispositif communautaire d'entraide : il ne remplace en aucun cas les services de secours. En cas d'urgence, appelez le 112.</p>
   </article>
 
   <article id="premium">
     <h3><span class="art-num">Article 5</span>Abonnement Premium</h3>
-    <p>Certaines fonctionnalités (super-likes étendus — 5 par jour, contre 1 en offre gratuite —, filtres avancés, révélation des profils qui vous ont aimé, visibilité des motards sur la carte, rétention étendue de l'historique de position) sont réservées à l'abonnement payant « IzenRide Premium ». La navigation guidée turn-by-turn est en revanche accessible à tous les Utilisateurs, y compris sans abonnement.</p>
+    <p>Certaines fonctionnalités (super-likes étendus (5 par jour, contre 1 en offre gratuite), filtres avancés, révélation des profils qui vous ont aimé, visibilité des motards sur la carte, rétention étendue de l'historique de position) sont réservées à l'abonnement payant « IzenRide Premium ». La navigation guidée turn-by-turn est en revanche accessible à tous les Utilisateurs, y compris sans abonnement.</p>
     <p>Les conditions de souscription, de prix, de renouvellement, de résiliation et de rétractation de l'abonnement Premium sont détaillées dans les <a href="cgv.html">Conditions générales de vente (CGV)</a>, consultables dans l'Application. La souscription s'effectue exclusivement via l'App Store (Apple) ou Google Play.</p>
   </article>
 
@@ -114,7 +120,12 @@
   <article id="donnees">
     <h3><span class="art-num">Article 6</span>Données personnelles</h3>
     <p>Le traitement de vos données personnelles est décrit dans notre <a href="confidentialite.html">Politique de confidentialité</a>, partie intégrante des présentes CGU. Nous traitons vos données conformément au RGPD (UE 2016/679) et à la loi Informatique et Libertés.</p>
-    <p>Vous pouvez demander la suppression de votre compte et des données associées à tout moment, depuis l'Application ou par e-mail : la marche à suivre est décrite sur la page <a href="suppression-compte.html">Supprimer mon compte</a>.</p>
+    <!-- 2026-10-16 — CORRECTION PROPRE AU SITE, SANS CHANGEMENT DE VERSION DES CGU (v4.5 inchangée).
+         Ce paragraphe n'existe pas dans le texte versionné des CGU (apps/mobile/lib/legal/content/cgu.ts, article 6) :
+         il est propre à la vitrine. Il disait « la suppression de votre compte et des données associées », trop large
+         (commandes Marketplace payées conservées sans lien avec le compte, adresse de livraison jusqu'à 180 jours,
+         sauvegardes, annonces ayant fait l'objet d'une commande). Le détail reste sur suppression-compte.html. -->
+    <p>Vous pouvez demander la suppression de votre compte à tout moment, depuis l'Application ou par e-mail : la marche à suivre, ce qui est effacé et ce qui est conservé sont décrits sur la page <a href="suppression-compte.html">Supprimer mon compte</a>.</p>
     <p>Vous disposez des droits d'accès, de rectification, d'effacement, de portabilité, d'opposition et de limitation. Pour exercer ces droits : <a href="mailto:direction@izenride.com">direction@izenride.com</a>.</p>
     <div class="callout callout--ok">
       <b>Hébergement UE</b>
@@ -124,7 +135,7 @@
 
   <article id="comportements">
     <h3><span class="art-num">Article 7</span>Contenus et comportements</h3>
-    <p>Vous êtes responsable des contenus que vous publiez (photos, messages, annonces, événements). Sont notamment interdits : les contenus illicites, haineux, violents ou à caractère sexuel, le harcèlement, l'usurpation d'identité, la fraude, le spam et toute incitation à des comportements routiers dangereux.</p>
+    <p>Vous êtes responsable des contenus que vous publiez (photos, messages, événements). Sont notamment interdits : les contenus illicites, haineux, violents ou à caractère sexuel, le harcèlement, l'usurpation d'identité, la fraude, le spam et toute incitation à des comportements routiers dangereux.</p>
     <p>En cas de violation des présentes CGU, IZEN RIDE peut, selon la gravité : émettre un avertissement, retirer un contenu, suspendre temporairement le compte, ou supprimer définitivement le compte.</p>
     <div class="callout callout--critical">
       <b>Suppression immédiate</b>
@@ -132,14 +143,27 @@
     </div>
   </article>
 
+  <article id="signalement-moderation">
+    <h3><span class="art-num">Article 8</span>Signalement, modération et recours</h3>
+    <p>IZEN RIDE héberge des contenus que vous publiez. À ce titre, l'Application relève du règlement (UE) 2022/2065 sur les services numériques (« DSA »), qui impose de dire comment un contenu est signalé, comment une décision de modération est prise, et comment elle peut être contestée. Le présent article y répond.</p>
+    <p><b>Signaler un contenu ou un comportement.</b> Chaque profil, message, photo et annonce porte une action « Signaler », accessible directement depuis l'écran concerné. Le signalement est transmis à notre équipe de modération avec le contenu visé et le motif que vous indiquez. Vous pouvez également écrire à <a href="mailto:support@izenride.com">support@izenride.com</a> si le contenu n'est plus accessible depuis l'Application.</p>
+    <p><b>Ce que nous faisons du signalement.</b> Nous examinons chaque signalement et décidons, selon la gravité : ne rien faire, retirer le contenu, avertir son auteur, suspendre temporairement son compte, ou le supprimer. Un signalement manifestement infondé ou répété dans le but de nuire peut lui-même entraîner une mesure.</p>
+    <p><b>Ce que nous vous disons si une mesure vous vise.</b> Si votre compte est suspendu ou supprimé, l'Application vous en informe et indique le motif ainsi que les conséquences de la mesure. Vous n'êtes jamais mis devant un fait accompli sans explication.</p>
+    <div class="callout callout--info">
+      <b>Contester une décision</b>
+      Toute mesure de modération peut être contestée à <a href="mailto:support@izenride.com">support@izenride.com</a> — un bouton « Contester » figure directement sur l'écran qui vous annonce la mesure. Indiquez l'adresse e-mail de votre compte et les éléments qui vous semblent utiles ; nous réexaminons la décision et vous répondons.
+    </div>
+    <p><b>Point de contact.</b> Pour toute demande relative à la modération, aux signalements ou au règlement (UE) 2022/2065, y compris de la part d'une autorité, l'adresse de contact est <a href="mailto:support@izenride.com">support@izenride.com</a>. Les échanges se font en français.</p>
+  </article>
+
   <article id="responsabilite">
-    <h3><span class="art-num">Article 8</span>Responsabilité et propriété intellectuelle</h3>
+    <h3><span class="art-num">Article 9</span>Responsabilité et propriété intellectuelle</h3>
     <p>IZEN RIDE fournit l'Application au titre d'une obligation de moyens. Pendant la phase de bêta, l'Application est fournie « en l'état », sans garantie de disponibilité, d'exactitude des données (cartographie, stations, trafic) ni d'absence d'erreurs. Votre conduite et votre sécurité restent sous votre entière responsabilité.</p>
     <p>L'Application, ses marques, logos et contenus édités par IZEN RIDE sont protégés par le droit de la propriété intellectuelle. Vous bénéficiez d'un droit d'utilisation personnel, non exclusif et non cessible de l'Application. En publiant un contenu, vous accordez à IZEN RIDE une licence non exclusive et gratuite d'hébergement et d'affichage de ce contenu dans l'Application, pour la durée nécessaire au service.</p>
   </article>
 
   <article id="litiges">
-    <h3><span class="art-num">Article 9</span>Litiges et droit applicable</h3>
+    <h3><span class="art-num">Article 10</span>Litiges et droit applicable</h3>
     <p>Les présentes CGU sont régies par le droit français. En cas de difficulté, contactez-nous d'abord à <a href="mailto:direction@izenride.com">direction@izenride.com</a> : la plupart des situations se résolvent à ce stade.</p>
     <p>Conformément aux articles L611-1 et suivants du Code de la consommation, vous pouvez recourir gratuitement à un médiateur de la consommation. Les coordonnées du médiateur désigné par IZEN RIDE sont communiquées sur demande à <a href="mailto:direction@izenride.com">direction@izenride.com</a>. À défaut de résolution amiable, les tribunaux compétents sont déterminés selon les règles de droit commun.</p>
   </article>
@@ -151,17 +175,20 @@
     </div>
     <h2>Historique des versions</h2>
     <ul>
-      <li><b>v4.2</b> — 2026-08-29 — L'article 2 renvoie désormais aux CGV pour la souscription, à la place de l'ancienne clause de bêta sur la facturation. L'article 5 chiffre le quota de super-likes (5 par jour avec l'abonnement, 1 sans) au lieu d'annoncer un plafond inexistant. <em>(en vigueur)</em></li>
+      <li><b>v4.5</b> — 2026-10-01 — Alerte SOS (article 4.2) : IzenRide ne prévient pas vos contacts d'urgence en tant que tels ; l'application les affiche pour que vous les appeliez. Les articles 2 et 5 nomment la boutique de votre appareil. <em>(en vigueur)</em></li>
+      <li><b>v4.4</b> — 2026-08-28 — L'article sur la version de test renvoie désormais aux CGV pour tout ce qui touche à l'abonnement.</li>
+      <li><b>v4.3</b> — 2026-08-21 — Un article dédié explique comment signaler un contenu, ce que devient un signalement, ce qui vous est dit si une mesure vous vise, et comment la contester.</li>
+      <li><b>v4.2</b> — 2026-08-19 — Précision du périmètre de l'abonnement : les quotas quotidiens y sont désormais chiffrés.</li>
       <li><b>v4.1</b> — 2026-08-10 — Retrait d'un article devenu sans objet : la fonction correspondante est hors du périmètre de cette version. Articles suivants renumérotés.</li>
       <li><b>v4.0</b> — 2026-07-23 — Refonte complète : informations société exactes, alignement produit réel, clause bêta.</li>
       <li><b>v3.2</b> — 2026-03-14 — Version de démonstration (contenu non contractuel).</li>
     </ul>
-    <p>IZEN RIDE SAS — Conditions générales d'utilisation v4.2 — version publiée sur ce site.</p>
+    <p>IZEN RIDE SAS — Conditions générales d'utilisation v4.5 — version publiée sur ce site.</p>
   </footer>
 
   <div class="doc__cross">
-    <a href="cgv.html" class="btn">Lire les CGV</a>
-    <a href="index.html" class="btn">Retour au site</a>
+    <a href="cgv.html" class="btn btn--ghost btn--sm">Lire les CGV</a>
+    <a href="index.html" class="btn btn--ghost btn--sm">Retour au site</a>
   </div>
 
 </article>

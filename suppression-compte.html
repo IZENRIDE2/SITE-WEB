@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Supprimer mon compte — IzenRide</title>
+<meta name="description" content="Comment demander la suppression de votre compte IzenRide et de vos données personnelles.">
+<meta name="theme-color" content="#000000">
+<link rel="canonical" href="https://izenride.fr/suppression-compte.html">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/css/fonts.css?v=20261020">
+<link rel="stylesheet" href="assets/css/legal.css?v=20261020">
+<script defer src="https://izeninfo.fr/stats/t.js" data-site="izenride"></script>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="index.html" aria-label="IzenRide, accueil"><img src="assets/img/logo.png" alt="" width="32" height="32"><span>Izen<b>Ride</b></span></a>
+    <nav aria-label="Documents légaux">
+      <a href="cgu.html">CGU</a>
+      <a href="cgv.html">CGV</a>
+      <a href="mentions-legales.html">Mentions légales</a>
+      <a href="confidentialite.html">Confidentialité</a>
+    </nav>
+  </div>
+</header>
+<main class="doc-page">
+<article class="doc">
+
+  <header class="doc__head">
+    <span class="doc__pill">En vigueur</span>
+    <h1 class="doc__title">Supprimer mon compte et mes données</h1>
+    <p class="doc__sub">Document légal</p>
+    <div class="doc__meta">
+      <span><b>Version</b><i>v1.2</i></span>
+      <span><b>Dernière mise à jour</b><i>16 octobre 2026</i></span>
+      <span><b>Droit applicable</b><i>FR/UE</i></span>
+      <span><b>Lecture</b><i>~7 min</i></span>
+    </div>
+  </header>
+
+  <!--
+    🔴 v1.2 (2026-10-16) — SORT DES ANNONCES À LA SUPPRESSION, RELU EN PRODUCTION (lecture seule) :
+    listings.seller_id → users ON DELETE CASCADE, mais orders.listing_id SANS ACTION : si une commande
+    (même une demande de réservation annulée) désigne l'une des annonces du compte, l'effacement est refusé,
+    le repli anonymiser_compte ne touche pas aux annonces, et la suppression est retentée chaque nuit.
+    Formule calquée sur la politique v3.9 (« conservées tant que le compte qui les a publiées existe »).
+    Même correction que apps/site-institutionnel/src/pages/suppression-compte.astro (branche phase3/textes-suppression).
+  -->
+
+  <!--
+    🔴 v1.1 (2026-10-16) — ALIGNÉE SUR LA POLITIQUE v3.9.
+    La v1.0 listait « Annonces marketplace, commandes et avis » parmi les
+    données supprimées, ignorait la suppression reportée par une commande payée
+    en cours, et promettait des choses qu'aucune source ne dit (sauvegardes
+    effacées « à leur rotation », journaux « anonymisés », suppression
+    individuelle d'une annonce — retirée aux membres par le patch 10a).
+    Source qui fait foi : apps/site-institutionnel/src/pages/suppression-compte.astro
+    (publiée sur izenride-inscription.vercel.app/suppression-compte) et
+    apps/mobile/lib/legal/content/privacy.ts v3.9. Ne rien écrire ici que ces
+    deux sources ne disent pas ; ne JAMAIS y écrire de durée pour les commandes
+    payées (aucune purge codée).
+  -->
+
+  <p>Cette page explique comment demander la suppression de votre compte <strong>IzenRide</strong> (application mobile éditée par IZEN RIDE SAS) et ce que devient chaque donnée. Deux voies sont possibles : depuis l'application, ou par e-mail si vous ne l'avez plus installée.</p>
+
+  <nav class="toc" aria-label="Sommaire">
+    <h2>Sommaire</h2>
+    <ol>
+      <li><a href="#depuis-application">Depuis l'application</a></li>
+      <li><a href="#sans-application">Sans l'application</a></li>
+      <li><a href="#delai">Délai et annulation</a></li>
+      <li><a href="#donnees-supprimees">Données supprimées</a></li>
+      <li><a href="#donnees-conservees">Données conservées</a></li>
+      <li><a href="#autres-droits">Vos autres droits</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ol>
+  </nav>
+
+  <article id="depuis-application">
+    <h3><span class="art-num">Article 1</span>Depuis l'application (recommandé)</h3>
+    <ol>
+      <li>Ouvrez IzenRide et connectez-vous à votre compte.</li>
+      <li>Allez dans <strong>Profil</strong> → <strong>Paramètres</strong> → <strong>Supprimer mon compte</strong>.</li>
+      <li>Le parcours vous indique ce que vous perdez et vous propose des alternatives (mettre le compte en pause, couper les notifications, bloquer une personne).</li>
+      <!-- 🔴 NE PAS NOMMER LE MOT ICI. L'application le demande dans SA langue :
+           SUPPRIMER, DELETE, LÖSCHEN, ΔΙΑΓΡΑΦΗ… depuis l'ajout de sept langues le
+           2026-08-30. Cette page est en français et sert les neuf : un mot écrit en
+           dur y est faux pour huit lecteurs sur neuf, et il l'est en silence.
+           Source : apps/mobile/i18n/locales/*.json → settings.delete.confirmWord. -->
+      <li>Confirmez en saisissant le mot que l’écran vous demande de recopier.</li>
+    </ol>
+    <p>Votre demande est enregistrée tout de suite. La suppression est programmée à <strong>30 jours</strong>, et peut être annulée pendant ce délai (voir l'article 3).</p>
+  </article>
+
+  <article id="sans-application">
+    <h3><span class="art-num">Article 2</span>Sans l'application (compte désinstallé)</h3>
+    <p>Si vous avez désinstallé l'application ou perdu l'accès à votre compte, écrivez à <a href="mailto:direction@izenride.com?subject=Suppression%20de%20mon%20compte%20IzenRide">direction@izenride.com</a> depuis l'adresse e-mail associée à votre compte, avec pour objet <em>« Suppression de mon compte »</em>.</p>
+    <p>Nous confirmons la réception sous 72 heures et traitons la demande dans le délai décrit à l'article 3. Si vous écrivez depuis une autre adresse, nous vous demanderons un élément permettant de vérifier qu'il s'agit bien de votre compte — nous ne supprimons jamais un compte sur simple demande non vérifiée.</p>
+    <div class="callout callout--info">
+      <b>Aucune installation nécessaire</b>
+      Cette voie ne demande ni de réinstaller l'application, ni de vous connecter : un e-mail depuis l'adresse associée à votre compte suffit.
+    </div>
+  </article>
+
+  <article id="delai">
+    <h3><span class="art-num">Article 3</span>Délai et annulation</h3>
+    <p>La suppression est <strong>programmée à 30 jours</strong>. Pendant ce délai, il vous suffit de vous reconnecter à l'application : elle vous indique que la suppression est programmée et vous propose de choisir « Annuler la suppression », pour retrouver votre profil intact, ou « Garder la suppression ». Passé ce délai, l'effacement est <strong>définitif et irréversible</strong>.</p>
+    <p>Un compte suspendu ou banni par notre équipe de modération n'est pas effacé tant que dure cette mesure.</p>
+    <div class="callout callout--warn">
+      <b>Commande Marketplace payée en cours : la suppression attend</b>
+      Si vous avez une commande Marketplace payée en cours — paiement en cours, commande à expédier ou en cours de livraison, délai de retour de 14 jours après la livraison, retour ouvert, remboursement ou litige —, votre demande est bien enregistrée, mais la suppression attend que ces commandes soient terminées : elle a lieu automatiquement lors du passage quotidien qui suit leur fin. L'application vous l'indique au moment de votre demande.
+    </div>
+    <div class="callout callout--warn">
+      <b>Abonnement Premium — la suppression du compte ne le résilie pas</b>
+      L'abonnement Premium est souscrit et facturé chez Apple ou Google, pas chez nous. La suppression de votre compte ne le résilie pas : pensez à le résilier depuis votre compte App Store ou Google Play.
+    </div>
+  </article>
+
+  <article id="donnees-supprimees">
+    <h3><span class="art-num">Article 4</span>Données supprimées</h3>
+    <ul>
+      <li>Votre compte et vos identifiants de connexion.</li>
+      <li>Votre profil : prénom, nom, pseudonyme, biographie, date de naissance, ville, motos.</li>
+      <li>Vos photos de profil et vos photos publiées.</li>
+      <li>Vos positions enregistrées et vos trajets.</li>
+      <li>Vos messages, vos conversations et vos réactions.</li>
+      <li>Vos likes, vos matchs et vos participations aux sorties.</li>
+      <li>Vos favoris de la place de marché, lorsque la fonction est activée sur votre version.</li>
+      <li>Vos annonces de la place de marché, lorsque la fonction est activée sur votre version : elles sont conservées tant que votre compte existe et supprimées avec lui — sauf si l'une d'elles a fait l'objet d'une commande ou d'une demande de réservation, même annulée (voir le paragraphe ci-dessous).</li>
+      <li>Vos zones de confidentialité et vos réglages.</li>
+      <li>Les signalements que vous avez faits et ceux qui visent votre compte.</li>
+    </ul>
+    <p>Vos fichiers déposés chez notre hébergeur (photos de profil, photos de moto, pièces jointes de conversation, dont les messages vocaux) sont retirés de son espace de stockage juste avant l'effacement de votre compte, puis leur disparition est vérifiée. Une copie déjà mise en cache par notre réseau de diffusion peut rester accessible <strong>au plus une heure</strong> après ; passé ce délai, plus aucune adresse ne la sert. Si ce retrait n'aboutit pas, votre compte est tout de même effacé à la date prévue, mais des fichiers peuvent subsister : écrivez-nous pour en demander le retrait.</p>
+    <p>Si la suppression ne peut pas aller jusqu'au bout — par exemple parce qu'une décision de modération se rapporte à un signalement vous concernant, ou parce qu'une annonce que vous avez publiée a fait l'objet d'une commande ou d'une demande de réservation —, une partie de votre profil est effacée en attendant : prénom, nom, pseudonyme, téléphone, date de naissance, biographie et photo de profil. Vos contacts d'urgence sont supprimés. Votre adresse e-mail de connexion, les informations données à votre inscription et le reste de vos données (ville, liens vers vos réseaux, motos, messages, annonces…) restent en revanche rattachés à votre compte. La suppression est retentée chaque nuit, et n'aboutit qu'une fois l'obstacle levé.</p>
+  </article>
+
+  <article id="donnees-conservees">
+    <h3><span class="art-num">Article 5</span>Ce qui n'est pas effacé, ou pas tout de suite</h3>
+    <table class="info-card">
+      <tbody>
+        <tr>
+          <th>Copies de sauvegarde</th>
+          <td>Notamment la copie complète de la base réalisée chaque jour et déposée chez Cloudflare R2 (voir notre <a href="confidentialite.html">politique de confidentialité</a>). Ces copies ne sont pas effacées automatiquement à ce jour : les données de votre compte, et le cas échéant vos fichiers, peuvent donc y figurer encore après son effacement.</td>
+        </tr>
+        <tr>
+          <th>Journaux internes</th>
+          <td>L'effacement de votre compte y est consigné. Depuis le 26 septembre 2026, ce journal ne garde plus votre adresse en clair : il ne conserve qu'une empreinte, qui ne permet pas de la retrouver. Le motif que vous avez éventuellement écrit en demandant la suppression y figure aussi ; ces inscriptions sont supprimées passé un délai de 180 jours.</td>
+        </tr>
+        <tr>
+          <th>Commandes Marketplace payées</th>
+          <td>Lorsque le paiement en ligne est ouvert sur votre version, les commandes que vous avez payées à une marque (pièces, montants, suivi, paiement) sont conservées après l'effacement, sans lien avec votre compte, pour la comptabilité de la marque qui a vendu. Le texte que vous avez écrit dans vos demandes de retour est effacé. Aucune durée maximale n'est encore fixée pour leur conservation.</td>
+        </tr>
+        <tr>
+          <th>Adresse de livraison d'une commande payée</th>
+          <td>Conservée chiffrée au plus 180 jours après la fin de la commande (terminée, remboursée ou annulée), même si votre compte a été effacé entre-temps, puis effacée. La marque qui vous a vendu ne peut plus la lire dans IzenRide au-delà ; ce qu'elle a déjà reçu de son côté, notamment par Stripe, relève de sa propre conservation.</td>
+        </tr>
+        <tr>
+          <th>Signalements portant sur une sortie que vous organisiez ou sur l'une de vos annonces</th>
+          <td>La sortie ou l'annonce est supprimée avec votre compte (pour une annonce, sauf dans le cas décrit à l'article 4), mais le signalement est conservé, sans lien avec votre compte.</td>
+        </tr>
+        <tr>
+          <th>Comptes créés avec l'ancienne version d'IzenRide</th>
+          <td>Cette version était hébergée par Google Firebase, qui conserve encore les données des comptes créés avec elle, jusqu'à sa fermeture. Leur effacement chez Firebase n'est pas encore automatique : lorsque votre compte est effacé chez nous, son ancien identifiant est gardé sur une liste des effacements restant à y faire.</td>
+        </tr>
+        <tr>
+          <th>Messages envoyés à d'autres membres</th>
+          <td>Ils sont supprimés de nos serveurs ; les copies déjà reçues sur les appareils de vos destinataires ne sont pas sous notre contrôle.</td>
+        </tr>
+      </tbody>
+    </table>
+  </article>
+
+  <article id="autres-droits">
+    <h3><span class="art-num">Article 6</span>Vos autres droits</h3>
+    <p>Accès, rectification, portabilité, opposition, limitation : écrivez à <a href="mailto:direction@izenride.com">direction@izenride.com</a>. Vous pouvez également introduire une réclamation auprès de la <a href="https://www.cnil.fr/fr/plaintes" target="_blank" rel="noopener noreferrer">CNIL</a>.</p>
+    <p>Voir aussi notre <a href="confidentialite.html">politique de confidentialité</a>.</p>
+  </article>
+
+  <article id="contact">
+    <h3><span class="art-num">Article 7</span>Contact</h3>
+    <table class="info-card">
+      <tbody>
+        <tr><th>Éditeur</th><td><strong>IZEN RIDE SAS</strong></td></tr>
+        <tr><th>Siège social</th><td>4 rue Massilie, 13420 Gémenos, France</td></tr>
+        <tr><th>SIREN</th><td><span class="mono">981 848 922</span> — RCS Marseille</td></tr>
+        <tr><th>E-mail</th><td><a href="mailto:direction@izenride.com">direction@izenride.com</a></td></tr>
+      </tbody>
+    </table>
+  </article>
+
+  <footer class="doc__foot">
+    <div class="doc__foot-meta">
+      <span><b>Contact :</b> <a href="mailto:direction@izenride.com">direction@izenride.com</a></span>
+      <span><b>Délai d'annulation :</b> 30 jours</span>
+    </div>
+    <h2>Historique des versions</h2>
+    <ul>
+      <li><b>v1.2</b> — 2026-10-16 — Sort des annonces précisé : supprimées avec le compte, sauf si l'une d'elles a fait l'objet d'une commande ou d'une demande de réservation ; la suppression est alors retentée chaque nuit et les annonces restent rattachées au compte en attendant. <em>(en vigueur)</em></li>
+      <li><b>v1.1</b> — 2026-10-16 — Alignée sur la politique de confidentialité v3.9. Suppression reportée tant qu'une commande Marketplace payée est en cours ; commandes payées conservées sans lien avec le compte, texte des demandes de retour effacé ; adresse de livraison effacée au plus 180 jours après la fin de la commande. À la reconnexion, l'application propose d'annuler ou de garder la suppression. Liste des données supprimées et conservées reprise de la page de référence (sauvegardes, journaux, ancienne version, signalements) ; accusé de réception sous 72 heures pour une demande par e-mail.</li>
+      <li><b>v1.0</b> — 2026-07-26 — Première version de la page « Supprimer mon compte » (suppression depuis l'application ou par e-mail).</li>
+    </ul>
+    <p>IZEN RIDE SAS — Suppression de compte — version publiée sur ce site. La numérotation de version est propre à cette page.</p>
+  </footer>
+
+  <div class="doc__cross">
+    <a href="confidentialite.html" class="btn btn--ghost btn--sm">Politique de confidentialité</a>
+    <a href="index.html" class="btn btn--ghost btn--sm">Retour au site</a>
+  </div>
+
+</article>
+</main>
+<footer class="site-foot">
+  <div class="wrap">
+    <span>© 2026 IZEN RIDE SAS, 4 rue Massilie, 13420 Gémenos. RCS Marseille 981 848 922.</span>
+    <nav aria-label="Informations légales">
+      <a href="cgu.html">CGU</a><a href="cgv.html">CGV</a><a href="mentions-legales.html">Mentions légales</a><a href="confidentialite.html">Confidentialité</a><a href="suppression-compte.html" aria-current="page">Supprimer mon compte</a><a href="support.html">Aide</a>
+    </nav>
+  </div>
+</footer>
+</body>
+</html>
