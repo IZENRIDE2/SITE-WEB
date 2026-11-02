@@ -677,3 +677,6 @@ h3{font-family:var(--body);font-weight:600;font-size:1.3rem;letter-spacing:-.01e
 .btn-ghost:hover{transform:translateY(-2px);border-color:#8D94A3}
 .top .btn-primary,.top .btn-primary:hover{background:transparent;box-shadow:0 0 22px 6px #0A1735}
 @media (prefers-reduced-motion:reduce){.btn:hover{transform:none}}
+
+/* Mot-clé visible au-dessus du titre principal (SEO) */
+.hero h1 .h1-tag{display:block;font:600 .9rem/1 var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--glow);margin-bottom:22px}
