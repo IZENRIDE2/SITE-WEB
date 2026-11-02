@@ -3,9 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>IzenRide : GPS moto, communauté et sécurité | Application gratuite</title>
+<title>IzenRide : application GPS moto gratuite, communauté et SOS</title>
 <link rel="canonical" href="https://izenride.fr/">
 <meta name="description" content="Application GPS moto gratuite : guidage vocal, itinéraires, croisements entre riders, sorties en groupe et alerte SOS. Sur Android et iPhone.">
+<meta name="robots" content="max-image-preview:large">
 <meta name="theme-color" content="#000000">
 <meta property="og:type" content="website">
 <meta property="og:title" content="IzenRide, le cockpit moto">
@@ -27,7 +28,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="preload" href="assets/fonts/barlow-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/css/fonts.css?v=20261020">
-<link rel="stylesheet" href="assets/css/site.css?v=20261102">
+<link rel="stylesheet" href="assets/css/site.css?v=20261102b">
 <link rel="stylesheet" href="assets/css/v2.css?v=20261029">
 <script type="application/ld+json">
 {
@@ -87,14 +88,24 @@
    "name": "IzenRide",
    "operatingSystem": "Android, iOS",
    "applicationCategory": "TravelApplication",
-   "inLanguage": ["fr","en","de","es","it","nl","pl","ro","el"],
+   "inLanguage": [
+    "fr",
+    "en",
+    "de",
+    "es",
+    "it",
+    "nl",
+    "pl",
+    "ro",
+    "el"
+   ],
    "description": "Application GPS moto gratuite : guidage vocal, itinéraires à étapes, croisements entre riders, messagerie, sorties en groupe et alerte SOS.",
    "url": "https://izenride.fr/",
    "image": "https://izenride.fr/assets/img/og-izenride.jpg",
    "screenshot": [
-    "https://izenride.fr/assets/screens/v319-carte.webp",
-    "https://izenride.fr/assets/screens/v319-itineraire.webp",
-    "https://izenride.fr/assets/screens/v319-croisements.webp"
+    "https://izenride.fr/assets/screens/v319b-carte.webp",
+    "https://izenride.fr/assets/screens/v319b-itineraire.webp",
+    "https://izenride.fr/assets/screens/v319b-croisements.webp"
    ],
    "publisher": {
     "@id": "https://izenride.fr/#org"
@@ -167,6 +178,14 @@
      "acceptedAnswer": {
       "@type": "Answer",
       "text": "L'application ne détecte pas les chutes : l'alerte SOS se déclenche manuellement. Aucune alerte automatique n'est envoyée à vos proches. Les signalements de dangers entre membres ne sont pas encore disponibles."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "IzenRide est-elle une application pour motards et motardes ?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Oui. IzenRide s'adresse à toutes les personnes qui roulent à moto, quelle que soit leur pratique : balade, route, piste ou trajets du quotidien. Le guidage GPS, la communauté et les outils de sécurité sont conçus pour la moto."
      }
     }
    ]
@@ -288,12 +307,15 @@
           <span class="kicker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-8-8 18-2-8-8-2Z"/></svg>Navigation</span>
           <h2 id="nav-title">Un GPS conçu pour la moto, <span class="hl">inclus gratuitement.</span></h2>
         </div>
-        <p class="lede">Le guidage vocal virage par virage est accessible à l'ensemble des membres, sans abonnement, et disponible dans votre langue.</p>
+        <div>
+          <p class="lede">Le guidage vocal virage par virage est accessible à l'ensemble des membres, sans abonnement, et disponible dans votre langue.</p>
+          <a class="more" href="gps-moto-gratuit.html">Découvrir le GPS moto gratuit</a>
+        </div>
       </div>
 
       <div class="nav-stage">
         <div class="nav-phone">
-          <div class="phone"><img src="assets/screens/v319-itineraire.webp" alt="Écran Recherche d'itinéraire : départ, arrivée et étapes" width="540" height="1104"></div>
+          <div class="phone"><img src="assets/screens/v319b-itineraire.webp" alt="Écran Recherche d'itinéraire : départ, arrivée et étapes" width="540" height="1104"></div>
           <div class="turn-card" aria-hidden="true">
             <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 20V12a4 4 0 0 1 4-4h7M15 4l4 4-4 4"/></svg></span>
             <div><b>300 m</b><span>Tournez à droite sur la D2</span></div>
@@ -336,7 +358,10 @@
           <span class="kicker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17.5" cy="9" r="2.5"/><path d="M16 14.2a5 5 0 0 1 6 4.8"/></svg>La communauté</span>
           <h2 id="com-title">La communauté moto <span class="hl">de votre région.</span></h2>
         </div>
-        <p class="lede">Rencontrez des riders qui partagent votre pratique, organisez vos sorties et retrouvez-vous sur la route. Seules les personnes avec lesquelles vous êtes en relation peuvent vous écrire.</p>
+        <div>
+          <p class="lede">Rencontrez des riders qui partagent votre pratique, organisez vos sorties et retrouvez-vous sur la route. Seules les personnes avec lesquelles vous êtes en relation peuvent vous écrire.</p>
+          <a class="more" href="communaute-moto.html">Découvrir la communauté moto</a>
+        </div>
       </div>
 
       <div class="split xblock" id="croisement">
@@ -352,7 +377,7 @@
         <p class="fine">Les rencontres répétées sont signalées, par exemple « 3 fois sur la même route ». Notifications en temps réel, quotidiennes ou hebdomadaires. Les croisements sont enregistrés lorsque vous partagez votre position, application ouverte. <b>L'historique complet est inclus dans Premium.</b></p>
       </div>
       <div class="cross-wrap cross-phone-wrap">
-        <div class="phone"><img src="assets/screens/v319-croisements.webp" alt="Écran Croisements : riders croisés, même route ou même endroit, avec leur moto (photos d'illustration)" width="540" height="1104"></div>
+        <div class="phone"><img src="assets/screens/v319b-croisements.webp" alt="Écran Croisements : riders croisés, même route ou même endroit, avec leur moto (photos d'illustration)" width="540" height="1104"></div>
       </div>
       </div>
 
@@ -364,7 +389,7 @@
               <p class="tile-p">Mise en relation selon la moto, la distance, le style de conduite, le niveau et les centres d'intérêt.</p>
               <p class="fine">Offre gratuite : 30 likes et 1 super-like par jour. Premium : likes illimités et 5 super-likes par jour.</p>
             </div>
-            <div class="phone sm"><img src="assets/screens/v319-match.webp" alt="Écran Match : profil d'un rider et actions (photo d'illustration)" width="540" height="1104"></div>
+            <div class="phone sm"><img src="assets/screens/v319b-match.webp" alt="Écran Match : profil d'un rider et actions (photo d'illustration)" width="540" height="1104"></div>
           </div>
         </article>
 
@@ -378,7 +403,7 @@
                 <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></span><div><b>Premier message</b><span>Option réservant le premier message à vos matchs.</span></div></li>
               </ul>
             </div>
-            <div class="phone sm"><img src="assets/screens/v319-groupe.webp" alt="Écran de discussion de groupe avec une sortie proposée (photos d'illustration)" width="540" height="1104"></div>
+            <div class="phone sm"><img src="assets/screens/v319b-groupe.webp" alt="Écran de discussion de groupe avec une sortie proposée (photos d'illustration)" width="540" height="1104"></div>
           </div>
         </article>
 
@@ -392,8 +417,9 @@
                 <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></span><div><b>« Y aller »</b><span>Le lieu de rendez-vous s'ouvre sur la carte et lance le guidage.</span></div></li>
               </ul>
               <span class="tag">Création de sorties : Premium</span>
+              <a class="more" href="sorties-moto.html">Trouver une sortie moto en groupe</a>
             </div>
-            <div class="phone sm"><img src="assets/screens/v319-agenda.webp" alt="Écran Agenda : sorties et rassemblements à venir" width="540" height="1104"></div>
+            <div class="phone sm"><img src="assets/screens/v319b-agenda.webp" alt="Écran Agenda : sorties et rassemblements à venir" width="540" height="1104"></div>
           </div>
         </article>
 
@@ -422,7 +448,10 @@
           <span class="kicker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6l-8-3Z"/></svg>Sécurité</span>
           <h2 id="securite-title">Votre sécurité, <span class="hl">à chaque trajet.</span></h2>
         </div>
-        <p class="lede">Fonctions incluses pour l'ensemble des membres. Vous gardez le contrôle des informations visibles par les autres.</p>
+        <div>
+          <p class="lede">Fonctions incluses pour l'ensemble des membres. Vous gardez le contrôle des informations visibles par les autres.</p>
+          <a class="more" href="securite-moto.html">Découvrir les outils de sécurité moto</a>
+        </div>
       </div>
 
       <div class="safety-grid">
@@ -615,6 +644,7 @@
         <details><summary>Sur quels téléphones, et dans quelles langues ?</summary><p>IzenRide est disponible sur Android et iPhone. L'application et le guidage vocal sont proposés en 9 langues : français, anglais, allemand, espagnol, italien, néerlandais, polonais, roumain et grec.</p></details>
         <details><summary>Que deviennent mes données ?</summary><p>IzenRide ne vend, ne loue ni n'échange vos données personnelles. L'historique de position est supprimé après 7 jours (30 jours avec Premium). L'export de vos données et la suppression de votre compte sont disponibles dans les réglages. La fréquentation est mesurée sans cookie par IZENINFO, sans conservation d'adresse IP.</p></details>
         <details><summary>Quelles fonctions ne sont pas encore disponibles ?</summary><p>L'application ne détecte pas les chutes : l'alerte SOS se déclenche manuellement. Aucune alerte automatique n'est envoyée à vos proches. Les signalements de dangers entre membres ne sont pas encore disponibles.</p></details>
+        <details><summary>IzenRide est-elle une application pour motards et motardes ?</summary><p>Oui. IzenRide s'adresse à toutes les personnes qui roulent à moto, quelle que soit leur pratique : balade, route, piste ou trajets du quotidien. Le guidage GPS, la communauté et les outils de sécurité sont conçus pour la moto.</p></details>
       </div>
     </div>
   </section>
@@ -656,6 +686,14 @@
         <a href="https://www.youtube.com/@IZENRIDE" rel="noopener">YouTube</a>
       </div>
     </div>
+    <nav class="foot-links foot-discover" aria-label="Découvrir IzenRide">
+      <span class="lbl">Découvrir</span>
+      <a href="gps-moto-gratuit.html">GPS moto gratuit</a>
+      <a href="communaute-moto.html">Communauté moto</a>
+      <a href="sorties-moto.html">Sorties moto</a>
+      <a href="securite-moto.html">Sécurité à moto</a>
+      <a href="balades-moto-provence.html">Balades moto en Provence</a>
+    </nav>
     <nav class="foot-links" aria-label="Informations légales">
       <a href="cgu.html">CGU</a>
       <a href="cgv.html">CGV</a>
@@ -669,7 +707,7 @@
   </div>
 </footer>
 
-<script src="assets/js/site.js?v=20261020"></script>
+<script src="assets/js/site.js?v=20261102b"></script>
 <script src="assets/js/fx.js?v=20261029" defer></script>
 </body>
 </html>

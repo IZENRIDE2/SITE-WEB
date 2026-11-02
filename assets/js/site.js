@@ -3,17 +3,17 @@
    dans assets/screens/ puis modifiez, ajoutez ou retirez des lignes ci-dessous.
    L'ordre de la liste est l'ordre d'affichage. */
 const SCREENS = [
-  { file: "v319-bienvenue.webp",   name: "Bienvenue",       desc: "Écran d'accueil : présentation des croisements et de la zone de confidentialité." },
-  { file: "v319-carte.webp",       name: "Carte",           desc: "Accès direct à l'itinéraire, aux croisements, au partage de position, au SOS et aux stations." },
-  { file: "v319-itineraire.webp",  name: "Itinéraire",      desc: "Saisie du départ, de l'arrivée et des étapes avant le guidage vocal." },
-  { file: "v319-croisements.webp", name: "Croisements",     desc: "Les riders croisés, sur la même route ou au même endroit, avec leur moto (photos de profil d'illustration)." },
-  { file: "v319-match.webp",       name: "Match",           desc: "Mise en relation avec des riders selon votre style de conduite (photo de profil d'illustration)." },
-  { file: "v319-groupe.webp",      name: "Groupe",          desc: "Discussion de groupe avec proposition de sortie et réponses de chaque membre (photos de profil d'illustration)." },
-  { file: "v319-agenda.webp",      name: "Sorties",         desc: "Agenda des balades, expositions, salons et rassemblements à venir." },
-  { file: "v319-profil.webp",      name: "Profil",          desc: "Statistiques de sorties et de kilomètres, riders croisés et « Mon code »." },
-  { file: "v319-precision.webp",   name: "Précision",       desc: "Réglage de la précision de votre position : 50 m, 500 m ou 5 km." },
-  { file: "v319-hors-ligne.webp",  name: "Hors ligne",      desc: "Téléchargement des régions pour utiliser la carte et le guidage sans réseau." },
-  { file: "v319-premium.webp",     name: "Premium",         desc: "Comparatif des offres Gratuit et Premium." }
+  { file: "v319b-bienvenue.webp",   name: "Bienvenue",       desc: "Écran d'accueil : présentation des croisements et de la zone de confidentialité." },
+  { file: "v319b-carte.webp",       name: "Carte",           desc: "Accès direct à l'itinéraire, aux croisements, au partage de position, au SOS et aux stations." },
+  { file: "v319b-itineraire.webp",  name: "Itinéraire",      desc: "Saisie du départ, de l'arrivée et des étapes avant le guidage vocal." },
+  { file: "v319b-croisements.webp", name: "Croisements",     desc: "Les riders croisés, sur la même route ou au même endroit, avec leur moto (photos de profil d'illustration)." },
+  { file: "v319b-match.webp",       name: "Match",           desc: "Mise en relation avec des riders selon votre style de conduite (photo de profil d'illustration)." },
+  { file: "v319b-groupe.webp",      name: "Groupe",          desc: "Discussion de groupe avec proposition de sortie et réponses de chaque membre (photos de profil d'illustration)." },
+  { file: "v319b-agenda.webp",      name: "Sorties",         desc: "Agenda des balades, expositions, salons et rassemblements à venir." },
+  { file: "v319b-profil.webp",      name: "Profil",          desc: "Statistiques de sorties et de kilomètres, riders croisés et « Mon code »." },
+  { file: "v319b-precision.webp",   name: "Précision",       desc: "Réglage de la précision de votre position : 50 m, 500 m ou 5 km." },
+  { file: "v319b-hors-ligne.webp",  name: "Hors ligne",      desc: "Téléchargement des régions pour utiliser la carte et le guidage sans réseau." },
+  { file: "v319b-premium.webp",     name: "Premium",         desc: "Comparatif des offres Gratuit et Premium." }
 ];
 
 const REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -444,7 +444,7 @@ const ride = { speed: 0, vel: 0, lastY: scrollY, heading: 0, lean: 0, dist: 0, v
   if (document.fonts) document.fonts.ready.then(size);
   setTimeout(size, 600);
   new IntersectionObserver(e => visible = e[0].isIntersecting).observe(hero);
-  if (REDUCE){ camS = 260; step(.016); speed = 0; ride.speed = 0; draw(); updateUI(); updateCluster(); return; }
+  if (REDUCE){ camS = 260; step(.016); speed = 0; ride.speed = 0; draw(); updateUI(); queueMicrotask(updateCluster); return; } // updateCluster après la déclaration de « el » plus bas
   requestAnimationFrame(t => { last = t; loop(t); });
 })();
 
