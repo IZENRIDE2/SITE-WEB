@@ -680,3 +680,12 @@ h3{font-family:var(--body);font-weight:600;font-size:1.3rem;letter-spacing:-.01e
 
 /* Mot-clé visible au-dessus du titre principal (SEO) */
 .hero h1 .h1-tag{display:block;font:600 .9rem/1 var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--glow);margin-bottom:22px}
+
+/* Liens internes vers les pages de contenu (SEO, 02/11/2026) */
+.more{display:inline-flex;align-items:center;gap:8px;margin-top:18px;justify-self:start;font-weight:600;color:var(--glow);text-decoration:none}
+.more::after{content:"→";transition:transform .2s}
+.more:hover{text-decoration:underline}
+.more:hover::after{transform:translateX(3px)}
+.faq details p a{color:var(--glow)}
+.foot-discover .lbl{color:var(--ink);font-weight:600}
+@media (prefers-reduced-motion:reduce){.more:hover::after{transform:none}}

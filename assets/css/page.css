@@ -1,0 +1,105 @@
+/* ==========================================================================
+   IzenRide – pages de contenu (GPS moto, communauté, sorties, sécurité, guides)
+   Chargée après site.css, dont elle réutilise les variables et composants.
+   ========================================================================== */
+.page .top{background:color-mix(in srgb,var(--night) 96%,transparent);border-bottom-color:var(--line)}
+.page .nav a[aria-current="page"]{color:var(--ink)}
+.page .nav a[aria-current="page"]::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:2px;border-radius:2px;background:var(--glow)}
+
+/* Fil d'Ariane */
+.crumbs{padding-top:96px;font-size:.9rem;color:var(--mute)}
+.crumbs ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.crumbs li+li::before{content:"›";margin-right:8px;color:var(--line)}
+.crumbs a{color:var(--mute);text-decoration:none}
+.crumbs a:hover{color:var(--ink);text-decoration:underline}
+
+/* En-tête de page */
+.page-hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:clamp(32px,6vw,90px);align-items:center;padding-block:clamp(28px,4vw,48px) clamp(56px,8vw,110px)}
+.page-hero > *{min-width:0}
+.page-hero h1{font-family:var(--body);font-weight:700;font-size:clamp(2.4rem,5vw,4rem);line-height:1.02;letter-spacing:-.035em;text-transform:none;margin-top:18px}
+.page-hero .lede{margin-top:22px;font-size:1.18rem;color:color-mix(in srgb,var(--ink) 82%,transparent);max-width:36em}
+.page-hero .ctas{margin-top:30px}
+.page-hero .phone{width:min(290px,70vw);justify-self:center}
+.facts{display:flex;flex-wrap:wrap;gap:8px;margin:26px 0 0;padding:0;list-style:none}
+.facts li{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--asphalt);font-size:.92rem;color:var(--ink)}
+.facts li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--glow)}
+@media (max-width:900px){.page-hero{grid-template-columns:1fr}.page-hero .phone{width:min(250px,64vw)}}
+
+/* Texte courant */
+.prose{max-width:760px}
+.prose h2{font-size:clamp(1.8rem,3.2vw,2.5rem);line-height:1.1;margin:0 0 18px}
+.prose h3{font-size:1.25rem;margin:30px 0 10px}
+.prose p,.prose li{color:color-mix(in srgb,var(--ink) 84%,transparent);line-height:1.7}
+.prose p+p{margin-top:14px}
+.prose ul,.prose ol{margin:14px 0 0;padding-left:1.2em;display:grid;gap:8px}
+.prose a{color:var(--glow)}
+.prose strong{color:var(--ink);font-weight:600}
+.two-col{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(28px,5vw,72px);align-items:start}
+.two-col > *{min-width:0}
+.two-col .phone{width:min(270px,66vw);justify-self:center;position:sticky;top:96px}
+@media (max-width:900px){.two-col{grid-template-columns:1fr}.two-col .phone{position:static}}
+
+/* Étapes numérotées */
+.steps{list-style:none;counter-reset:st;margin:26px 0 0;padding:0;display:grid;gap:14px}
+.steps li{counter-increment:st;position:relative;padding:18px 20px 18px 70px;border-radius:var(--r-lg);border:1px solid var(--line);background:var(--asphalt)}
+.steps li::before{content:counter(st);position:absolute;left:18px;top:16px;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--action);color:#fff;font:700 1rem/1 var(--body)}
+.steps b{display:block;color:var(--ink);font-weight:600;margin-bottom:4px}
+.steps span{color:var(--mute)}
+
+/* Encadré */
+.note{margin-top:22px;padding:18px 20px;border-radius:var(--r-md);border:1px solid var(--line);border-left:3px solid var(--glow);background:var(--asphalt);color:var(--mute);line-height:1.6}
+.note strong{color:var(--ink)}
+.note.warn{border-left-color:var(--sos)}
+
+/* Tableau simple */
+.tbl{width:100%;border-collapse:collapse;margin-top:20px;font-size:.98rem}
+.tbl th,.tbl td{padding:12px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.tbl th{color:var(--mute);font-weight:600;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em}
+.tbl td:first-child{color:var(--ink);font-weight:600}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--asphalt);padding:0 8px}
+
+/* Cartes de routes (guides) */
+.routes{display:grid;gap:18px;margin-top:34px}
+.route{display:grid;grid-template-columns:auto minmax(0,1fr);gap:20px;padding:clamp(20px,3vw,30px);border-radius:var(--r-lg);border:1px solid var(--line);background:linear-gradient(180deg,var(--deck),var(--asphalt))}
+.route .num{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--signal) 16%,transparent);color:var(--glow);font:700 1.2rem/1 var(--body)}
+.route h3{margin:0;font-size:1.35rem}
+.route .road{display:inline-block;margin-top:6px;color:var(--glow);font-weight:600;font-size:.95rem}
+.route p{color:color-mix(in srgb,var(--ink) 82%,transparent);line-height:1.65;margin-top:10px}
+.route dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;margin:14px 0 0;font-size:.95rem}
+.route dt{color:var(--mute)}
+.route dd{margin:0;color:var(--ink)}
+@media (max-width:560px){.route{grid-template-columns:1fr}}
+
+/* Pages liées */
+.related{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin-top:30px}
+.related a{display:grid;gap:8px;padding:20px;border-radius:var(--r-lg);border:1px solid var(--line);background:var(--asphalt);text-decoration:none;transition:border-color .2s,transform .2s}
+.related a:hover{border-color:var(--glow);transform:translateY(-2px)}
+.related b{font-weight:600;font-size:1.08rem;color:var(--ink)}
+.related span{color:var(--mute);font-size:.95rem;line-height:1.5}
+.related em{font-style:normal;color:var(--glow);font-weight:600;font-size:.92rem}
+
+/* Rythme des sections */
+.page .band{padding-block:clamp(56px,7vw,100px)}
+.page .band.alt{background:var(--asphalt);border-block:1px solid var(--line)}
+.page .band.get{padding-block:clamp(84px,11vw,150px)}
+.page .band.alt .feat,.page .band.alt .xtype,.page .band.alt .steps li,.page .band.alt .note,.page .band.alt .tbl-wrap,.page .band.alt .share-card{background:var(--deck)}
+.mt{margin-top:28px}
+.byline{margin-top:14px;color:var(--mute);font-size:.95rem}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+/* Grilles */
+.feat-grid.cols-3{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:40px}
+@media (max-width:980px){.feat-grid.cols-3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:620px){.feat-grid.cols-3{grid-template-columns:1fr}}
+.steps.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (max-width:760px){.steps.cols-2{grid-template-columns:1fr}}
+
+/* Composants placés dans un bloc de texte */
+.prose .kicker{margin-bottom:16px}
+.prose .checks,.prose .steps{padding-left:0}
+.prose .checks{margin-top:22px;gap:14px}
+.prose .steps{gap:14px;margin-top:26px}
+.prose .more{margin-top:22px}
+.prose .note{color:var(--mute)}
+.steps a,.page .faq details p a{color:var(--glow)}
+.related-head{margin-bottom:6px}
