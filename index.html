@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>IzenRide : GPS moto, communauté et sécurité | Application gratuite</title>
 <link rel="canonical" href="https://izenride.fr/">
-<meta name="description" content="IzenRide, l'application de navigation et de communauté moto : GPS avec guidage vocal gratuit, croisements, messagerie, sorties et alerte SOS. Disponible sur Android et iPhone, en 9 langues.">
+<meta name="description" content="Application GPS moto gratuite : guidage vocal, itinéraires, croisements entre riders, sorties en groupe et alerte SOS. Sur Android et iPhone.">
 <meta name="theme-color" content="#000000">
 <meta property="og:type" content="website">
 <meta property="og:title" content="IzenRide, le cockpit moto">
@@ -18,22 +18,160 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="IzenRide, l'application GPS et communauté moto">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="IzenRide, le cockpit moto">
+<meta name="twitter:description" content="GPS moto gratuit, communauté et sécurité. Sur Android et iPhone.">
+<meta name="twitter:image" content="https://izenride.fr/assets/img/og-izenride.jpg">
+<meta name="apple-itunes-app" content="app-id=6476877458">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="preload" href="assets/fonts/barlow-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/css/fonts.css?v=20261020">
-<link rel="stylesheet" href="assets/css/site.css?v=20261020">
+<link rel="stylesheet" href="assets/css/site.css?v=20261102">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@graph":[
- {"@type":"Organization","@id":"https://izenride.fr/#org","name":"IZEN RIDE","url":"https://izenride.fr/","logo":"https://izenride.fr/assets/img/logo.png",
-  "sameAs":["https://www.instagram.com/izenride/","https://www.tiktok.com/@IZENRIDE","https://www.youtube.com/@IZENRIDE"]},
- {"@type":"MobileApplication","name":"IzenRide","operatingSystem":"Android, iOS","applicationCategory":"TravelApplication","inLanguage":"fr",
-  "description":"Application de navigation GPS et de communauté moto : guidage vocal gratuit, croisements, messagerie, sorties et alerte SOS.",
-  "url":"https://izenride.fr/","image":"https://izenride.fr/assets/img/og-izenride.jpg","publisher":{"@id":"https://izenride.fr/#org"},
-  "offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},
-  "downloadUrl":["https://play.google.com/store/apps/details?id=com.izenride.app","https://apps.apple.com/fr/app/izenride/id6476877458"]}
-]}
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "Organization",
+   "@id": "https://izenride.fr/#org",
+   "name": "IzenRide",
+   "legalName": "IZEN RIDE SAS",
+   "url": "https://izenride.fr/",
+   "logo": {
+    "@type": "ImageObject",
+    "url": "https://izenride.fr/assets/img/logo-512.png",
+    "width": 512,
+    "height": 512
+   },
+   "email": "support@izenride.com",
+   "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "4 rue Massilie",
+    "postalCode": "13420",
+    "addressLocality": "Gémenos",
+    "addressCountry": "FR"
+   },
+   "identifier": "RCS Marseille 981 848 922",
+   "contactPoint": {
+    "@type": "ContactPoint",
+    "contactType": "customer support",
+    "email": "support@izenride.com",
+    "availableLanguage": [
+     "fr",
+     "en"
+    ]
+   },
+   "sameAs": [
+    "https://www.instagram.com/izenride/",
+    "https://www.tiktok.com/@IZENRIDE",
+    "https://www.youtube.com/@IZENRIDE",
+    "https://play.google.com/store/apps/details?id=com.izenride.app",
+    "https://apps.apple.com/fr/app/izenride/id6476877458"
+   ]
+  },
+  {
+   "@type": "WebSite",
+   "@id": "https://izenride.fr/#site",
+   "url": "https://izenride.fr/",
+   "name": "IzenRide",
+   "inLanguage": "fr-FR",
+   "publisher": {
+    "@id": "https://izenride.fr/#org"
+   }
+  },
+  {
+   "@type": "MobileApplication",
+   "@id": "https://izenride.fr/#app",
+   "name": "IzenRide",
+   "operatingSystem": "Android, iOS",
+   "applicationCategory": "TravelApplication",
+   "inLanguage": ["fr","en","de","es","it","nl","pl","ro","el"],
+   "description": "Application GPS moto gratuite : guidage vocal, itinéraires à étapes, croisements entre riders, messagerie, sorties en groupe et alerte SOS.",
+   "url": "https://izenride.fr/",
+   "image": "https://izenride.fr/assets/img/og-izenride.jpg",
+   "screenshot": [
+    "https://izenride.fr/assets/screens/v319-carte.webp",
+    "https://izenride.fr/assets/screens/v319-itineraire.webp",
+    "https://izenride.fr/assets/screens/v319-croisements.webp"
+   ],
+   "publisher": {
+    "@id": "https://izenride.fr/#org"
+   },
+   "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "EUR"
+   },
+   "downloadUrl": [
+    "https://play.google.com/store/apps/details?id=com.izenride.app",
+    "https://apps.apple.com/fr/app/izenride/id6476877458"
+   ]
+  },
+  {
+   "@type": "FAQPage",
+   "@id": "https://izenride.fr/#faq",
+   "mainEntity": [
+    {
+     "@type": "Question",
+     "name": "IzenRide est-il gratuit ?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Oui, les fonctions essentielles sont gratuites : guidage GPS vocal, SOS, zones de confidentialité, partage de trajet, messagerie, groupes et sorties. L'abonnement Premium (9,99 € par mois ou 79,99 € par an, sans engagement) donne accès à la carte des riders en temps réel, à l'historique des croisements, à la création de sorties et supprime les limites de likes."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Le SOS prévient-il mes proches ?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Non. Après un décompte de 10 secondes, votre position exacte est transmise aux membres IzenRide à proximité, qui peuvent vous répondre. IzenRide ne prévient pas vos contacts d'urgence : l'application vous permet de les appeler directement et affiche le numéro d'urgence 112."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Qui voit ma position ?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Personne, tant que vous ne la partagez pas. Une fois le partage activé, application ouverte, les membres à proximité vous voient selon la précision choisie : 50 m, 500 m, à l'échelle de la ville ou pas du tout. Jusqu'à 5 zones de confidentialité vous rendent invisible autour des lieux de votre choix."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Comment fonctionne un croisement ?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Un croisement est enregistré lorsque deux membres partageant leur position passent à moins de 500 m de distance, à 5 minutes d'intervalle. L'application identifie également les riders ayant emprunté le même itinéraire le même jour ou fréquenté le même lieu."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Sur quels téléphones, et dans quelles langues ?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "IzenRide est disponible sur Android et iPhone. L'application et le guidage vocal sont proposés en 9 langues : français, anglais, allemand, espagnol, italien, néerlandais, polonais, roumain et grec."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Que deviennent mes données ?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "IzenRide ne vend, ne loue ni n'échange vos données personnelles. L'historique de position est supprimé après 7 jours (30 jours avec Premium). L'export de vos données et la suppression de votre compte sont disponibles dans les réglages. La fréquentation est mesurée sans cookie par IZENINFO, sans conservation d'adresse IP."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Quelles fonctions ne sont pas encore disponibles ?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "L'application ne détecte pas les chutes : l'alerte SOS se déclenche manuellement. Aucune alerte automatique n'est envoyée à vos proches. Les signalements de dangers entre membres ne sont pas encore disponibles."
+     }
+    }
+   ]
+  }
+ ]
+}
 </script>
 <script defer src="https://izeninfo.fr/stats/t.js" data-site="izenride"></script>
 </head>
@@ -98,7 +236,7 @@
     <div class="nav-toast" id="navToast" aria-hidden="true"><img src="assets/img/logo.png" alt=""><div><b>Croisement</b><span></span></div></div>
     <div class="wrap hero-main">
       <div>
-        <h1 id="hero-title">Le cockpit <span class="l2">moto.</span></h1>
+        <h1 id="hero-title"><span class="h1-tag">Application GPS moto gratuite</span>Le cockpit <span class="l2">moto.</span></h1>
         <p class="lede">IzenRide réunit la navigation GPS conçue pour la moto, la communauté moto de votre région et des outils de sécurité pour chacun de vos trajets.</p>
         <div class="ctas">
           <a class="btn btn-primary" href="https://play.google.com/store/apps/details?id=com.izenride.app" rel="noopener">
