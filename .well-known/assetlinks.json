@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.izenride.app",
+      "sha256_cert_fingerprints": [
+        "51:BE:17:12:80:38:D6:3E:4E:7A:7E:CE:5B:17:BE:41:02:5B:C5:91:54:22:CB:8E:00:28:BB:CD:86:12:C8:C9"
+      ]
+    }
+  }
+]
