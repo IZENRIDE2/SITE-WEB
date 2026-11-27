@@ -179,6 +179,15 @@ if ($connecte || $partenaire !== null) {
     $izrVue = !$connecte ? 'accueil' : (($_GET['vue'] ?? '') === 'comptes' ? 'comptes' : 'stats');
     $izrPartenaire = $partenaire !== null ? izr_annuaire()[$partenaire] : null;
     $izrConsole = ['message' => '', 'erreur' => '', 'generes' => []];
+    $izrErreurValidation = '';
+    if ($partenaire !== null && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'valider') {
+        $izrErreurValidation = $jetonOk ? izr_valider_compte($partenaire, $_POST) : 'La page a expiré. Rechargez-la et réessayez.';
+        if ($izrErreurValidation === '') {
+            header('Location: /espace-pro.html', true, 303);
+            exit;
+        }
+    }
+    $izrCompte = $partenaire !== null ? (izr_comptes_lire()[$partenaire] ?? []) : [];
     if ($izrVue === 'comptes' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($jetonOk) {
             $izrConsole = izr_console_traiter($_POST);
