@@ -53,13 +53,19 @@ $izrJeton = izr_h($_SESSION['jeton']);
 .pro-barre{border-bottom:1px solid var(--line);background:var(--deck)}
 .pro-barre .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 24px;padding-block:10px;font-size:.95rem;color:var(--mute)}
 .pro-barre form{margin:0}
+.pro-validation{max-width:520px}
+.pro-validation .btn{background:var(--action);color:white}
+.pro-validation h2{font-family:var(--body);font-size:1.5rem;font-weight:600;margin:0;text-transform:none;letter-spacing:-.01em}
+.pro-validation h2::before{content:none}
+.pro-case{display:flex;gap:10px;align-items:flex-start;font-size:.95rem}
+.pro-case input{width:20px;height:20px;flex:none;margin-top:2px;accent-color:var(--action)}
 .pro-vues{display:flex;gap:4px}
 .pro-vues a{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:10px;color:var(--mute);font-weight:600;text-decoration:none}
 .pro-vues a:hover{color:var(--ink)}
 .pro-vues a[aria-current="page"]{color:var(--ink);background:var(--asphalt);box-shadow:inset 0 0 0 1px var(--line)}
 .pro-barre button{min-height:44px;padding:0 16px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
 </style>
-<link rel="stylesheet" href="assets/css/espace-pro.css?v=20261127e">
+<link rel="stylesheet" href="assets/css/espace-pro.css?v=20261127g">
 <?php if ($izrVue === 'stats') : ?>
 <script defer src="assets/js/espace-pro-stats.js?v=20261127f"></script>
 <?php endif; ?>
@@ -109,7 +115,35 @@ $izrJeton = izr_h($_SESSION['jeton']);
 <?php else : ?>
   <div class="ps">
     <div><span class="kicker">Espace pro</span><h1>Bienvenue</h1><p class="lede"><?= izr_h($izrPartenaire['nom']) ?></p></div>
-    <p class="ps-note"><strong>Votre accès est ouvert.</strong> Les outils de votre espace sont en cours de préparation : vous les retrouverez ici dès leur mise en ligne.</p>
+<?php if (!empty($izrCompte['valide'])) : ?>
+    <p class="ps-note" role="status"><strong>Votre compte est validé</strong> depuis le <?= izr_date($izrCompte['valide']) ?>. IzenRide vous enverra vos informations (accès, QR code, mode d'emploi) à l'adresse <?= izr_h($izrCompte['contact']['email'] ?? '') ?>.</p>
+    <p class="lede">Contact : <?= izr_h(($izrCompte['contact']['nom'] ?? '') . (($izrCompte['contact']['telephone'] ?? '') !== '' ? ' · ' . $izrCompte['contact']['telephone'] : '')) ?>. Pour modifier ces coordonnées, écrivez à <a href="mailto:support@izenride.com">support@izenride.com</a>.</p>
+<?php else : ?>
+    <form class="pro-carte pro-validation" method="post" action="espace-pro.html">
+      <input type="hidden" name="jeton" value="<?= $izrJeton ?>">
+      <input type="hidden" name="action" value="valider">
+      <h2>Validez votre compte</h2>
+      <p class="pro-note">Confirmez vos coordonnées : IzenRide vous enverra ensuite vos informations (accès, QR code, mode d'emploi).</p>
+<?php if ($izrErreurValidation !== '') : ?>
+      <p class="pro-alerte" role="alert"><?= izr_h($izrErreurValidation) ?></p>
+<?php endif; ?>
+      <div class="pro-champ">
+        <label for="contact_nom">Nom de la personne à contacter</label>
+        <input id="contact_nom" name="contact_nom" type="text" required maxlength="80" autocomplete="name" value="<?= izr_h((string) ($_POST['contact_nom'] ?? '')) ?>">
+      </div>
+      <div class="pro-champ">
+        <label for="contact_email">Adresse e-mail</label>
+        <input id="contact_email" name="contact_email" type="email" required maxlength="160" autocomplete="email" value="<?= izr_h((string) ($_POST['contact_email'] ?? '')) ?>">
+      </div>
+      <div class="pro-champ">
+        <label for="contact_telephone">Téléphone (facultatif)</label>
+        <input id="contact_telephone" name="contact_telephone" type="tel" maxlength="30" autocomplete="tel" value="<?= izr_h((string) ($_POST['contact_telephone'] ?? '')) ?>">
+      </div>
+      <label class="pro-case"><input type="checkbox" name="confirmation" value="oui" required> Je confirme que ces coordonnées sont celles de <?= izr_h($izrPartenaire['nom']) ?>.</label>
+      <button class="btn btn-primary" type="submit">Je valide mon compte</button>
+      <p class="pro-note">Ces coordonnées servent uniquement à la gestion de votre compte partenaire. Voir notre <a href="confidentialite.html">politique de confidentialité</a>.</p>
+    </form>
+<?php endif; ?>
   </div>
 <?php endif; ?>
 </main>

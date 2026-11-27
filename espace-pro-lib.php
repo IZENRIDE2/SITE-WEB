@@ -156,6 +156,123 @@ function izr_scans_30_jours(): array
     return ['jours' => $jours, 'scans' => $parMagasin];
 }
 
+/** Total des scans enregistrés pour ces magasins, toutes dates confondues. */
+function izr_scans_total(array $ids): int
+{
+    $brut = @file_get_contents(izr_fichier_scans());
+    $scans = is_string($brut) ? json_decode($brut, true) : null;
+    $n = 0;
+    foreach (is_array($scans) ? $scans : [] as $jour) {
+        foreach ($ids as $id) {
+            $n += (int) ($jour[$id] ?? 0);
+        }
+    }
+    return $n;
+}
+
+function izr_ligne(string $s, int $max): string
+{
+    return mb_substr(trim(preg_replace('/[\x00-\x1F\x7F]+/u', ' ', $s) ?? ''), 0, $max);
+}
+
+/** Le magasin (ou la maison mère) confirme ses coordonnées et valide son compte. Rend un message d'erreur, ou ''. */
+function izr_valider_compte(string $id, array $post): string
+{
+    $email = strtolower(izr_ligne((string) ($post['contact_email'] ?? ''), 160));
+    $nom = izr_ligne((string) ($post['contact_nom'] ?? ''), 80);
+    $tel = izr_ligne((string) ($post['contact_telephone'] ?? ''), 30);
+    if ($nom === '') {
+        return 'Indiquez le nom de la personne à contacter.';
+    }
+    if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+        return 'Cette adresse e-mail n\'est pas valide.';
+    }
+    if ($tel !== '' && !preg_match('/^[0-9 +().-]{6,30}$/', $tel)) {
+        return 'Ce numéro de téléphone n\'est pas valide.';
+    }
+    if (($post['confirmation'] ?? '') !== 'oui') {
+        return 'Cochez la case de confirmation pour valider votre compte.';
+    }
+    $ok = izr_comptes_modifier(function (array &$tous) use ($id, $email, $nom, $tel): void {
+        if (isset($tous[$id])) {
+            $tous[$id]['contact'] = ['email' => $email, 'nom' => $nom, 'telephone' => $tel];
+            $tous[$id]['valide'] = time();
+        }
+    });
+    return $ok ? '' : 'L\'enregistrement a échoué. Réessayez dans un instant.';
+}
+
+/** Envoie au compte validé ses accès, son QR code, le mode d'emploi et ses chiffres. Rend un message d'erreur, ou ''. */
+function izr_envoyer_informations(string $id): string
+{
+    $a = izr_annuaire()[$id] ?? null;
+    $c = izr_comptes_lire()[$id] ?? null;
+    $email = is_array($c) ? (string) ($c['contact']['email'] ?? '') : '';
+    if ($a === null || empty($c['valide']) || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+        return 'Ce compte n\'a pas encore été validé : il n\'y a pas d\'adresse à laquelle écrire.';
+    }
+    $estMagasin = $a['type'] === 'magasin';
+    $nomCourt = $estMagasin ? $a['nom'] : $a['enseigne'];
+    $ids = [$id];
+    if (!$estMagasin) {
+        $ids = [];
+        foreach (izr_annuaire() as $i => $m) {
+            if ($m['type'] === 'magasin' && $m['enseigne'] === $a['enseigne']) {
+                $ids[] = $i;
+            }
+        }
+    }
+    $aujourdhui = (new DateTimeImmutable('now', new DateTimeZone(IZR_FUSEAU_DAFFICHAGE)))->format('d/m/Y');
+    $t = 'Bonjour ' . ($c['contact']['nom'] ?? '') . ",\n\n"
+        . 'Le compte IzenRide de ' . $nomCourt . " est validé. Voici vos informations.\n\n"
+        . "VOS ACCÈS\n"
+        . "Espace pro : https://izenride.fr/espace-pro.html\n"
+        . 'Identifiant : ' . $id . "\n"
+        . 'Mot de passe : celui qui vous a été remis' . ($estMagasin ? ' par votre enseigne' : ' par IzenRide') . ". Il ne figure pas dans cet e-mail.\n\n";
+    if ($estMagasin) {
+        $t .= "VOTRE QR CODE 2027\n"
+            . "Il est joint à cet e-mail et disponible à cette adresse :\n"
+            . 'https://izenride.fr/assets/qr/2027/' . $id . ".png\n"
+            . "Il est valable du 1er janvier au 31 décembre 2027.\n\n"
+            . "MODE D'EMPLOI\n"
+            . "1. Imprimez le QR code (10 cm de côté au minimum) et affichez-le à l'accueil ou près de la caisse.\n"
+            . "2. Votre client le scanne avec l'appareil photo de son téléphone.\n"
+            . "3. Il arrive sur une page IzenRide au nom de votre magasin et télécharge l'application.\n"
+            . "Chaque scan est compté pour votre magasin.\n\n"
+            . "VOS CHIFFRES\n"
+            . 'Scans de votre QR code au ' . $aujourdhui . ' : ' . izr_scans_total($ids) . "\n\n";
+    } else {
+        $t .= "MODE D'EMPLOI\n"
+            . 'Chacun de vos ' . count($ids) . " magasins dispose de son propre QR code, valable du 1er janvier au 31 décembre 2027.\n"
+            . "Le magasin l'affiche à l'accueil ou près de la caisse ; le client le scanne avec son téléphone,\n"
+            . "arrive sur une page IzenRide au nom du magasin et télécharge l'application.\n"
+            . "Chaque scan est compté pour le magasin concerné.\n\n"
+            . "VOS CHIFFRES\n"
+            . 'Scans des QR codes de vos magasins au ' . $aujourdhui . ' : ' . izr_scans_total($ids) . "\n\n";
+    }
+    $t .= "Une question ? Écrivez-nous à support@izenride.com.\n\nL'équipe IzenRide\n";
+
+    $limite = 'izr-' . bin2hex(random_bytes(12));
+    $corps = '--' . $limite . "\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n" . chunk_split(base64_encode($t));
+    $image = $estMagasin ? @file_get_contents(__DIR__ . '/assets/qr/2027/' . $id . '.png') : false;
+    if (is_string($image)) {
+        $corps .= '--' . $limite . "\r\nContent-Type: image/png; name=\"qr-code-2027-" . $id . ".png\"\r\nContent-Transfer-Encoding: base64\r\n"
+            . 'Content-Disposition: attachment; filename="qr-code-2027-' . $id . ".png\"\r\n\r\n" . chunk_split(base64_encode($image));
+    }
+    $corps .= '--' . $limite . "--\r\n";
+    $entetes = "From: IzenRide <support@izenride.com>\r\nReply-To: support@izenride.com\r\nMIME-Version: 1.0\r\nContent-Type: multipart/mixed; boundary=\"" . $limite . '"';
+    $objet = mb_encode_mimeheader('IzenRide : vos informations partenaire (' . $nomCourt . ')', 'UTF-8', 'B', "\r\n");
+    if (!@mail($email, $objet, $corps, $entetes)) {
+        return 'L\'hébergement a refusé l\'envoi de l\'e-mail à ' . $email . '.';
+    }
+    izr_comptes_modifier(function (array &$tous) use ($id): void {
+        if (isset($tous[$id])) {
+            $tous[$id]['envoye'] = time();
+        }
+    });
+    return '';
+}
+
 function izr_date(?int $t): string
 {
     if (!$t) {
@@ -230,6 +347,16 @@ function izr_console_traiter(array $post): array
         return $r;
     }
 
+    if ($action === 'envoyer' && isset($annuaire[$id])) {
+        $erreur = izr_envoyer_informations($id);
+        if ($erreur !== '') {
+            $r['erreur'] = $erreur;
+        } else {
+            $r['message'] = $annuaire[$id]['nom'] . ' : informations envoyées à ' . (izr_comptes_lire()[$id]['contact']['email'] ?? '') . '.';
+        }
+        return $r;
+    }
+
     $r['erreur'] = 'Action inconnue.';
     return $r;
 }
@@ -238,7 +365,8 @@ function izr_console_ligne(string $id, array $a, array $c, string $jeton, string
 {
     $aMdp = !empty($c['empreinte']);
     $actif = $aMdp && !empty($c['actif']);
-    $etat = !$aMdp ? ['Sans mot de passe', 'pc-gris'] : ($actif ? ['Actif', 'pc-actif'] : ['Suspendu', 'pc-suspendu']);
+    $valide = !empty($c['valide']);
+    $etat = !$aMdp ? ['Sans mot de passe', 'pc-gris'] : (!$actif ? ['Suspendu', 'pc-suspendu'] : ($valide ? ['Validé', 'pc-actif'] : ['En attente de validation', 'pc-attente']));
     $champs = '<input type="hidden" name="jeton" value="' . $jeton . '"><input type="hidden" name="compte" value="' . izr_h($id) . '">';
     $form = '<form method="post" action="' . $retour . '">' . $champs;
     if (!$aMdp) {
@@ -248,13 +376,20 @@ function izr_console_ligne(string $id, array $a, array $c, string $jeton, string
             . '<p>L\'ancien mot de passe cessera de fonctionner tout de suite.</p><button class="pc-btn pc-btn-fort" name="action" value="generer">Confirmer</button></form></details>'
             . $form . '<button class="pc-btn" name="action" value="' . ($actif ? 'suspendre' : 'reactiver') . '">' . ($actif ? 'Suspendre' : 'Réactiver') . '</button></form>';
     }
+    if ($valide && $actif) {
+        $actions = $form . '<button class="pc-btn pc-btn-fort" name="action" value="envoyer">' . (empty($c['envoye']) ? 'Envoyer les informations' : 'Renvoyer les informations') . '</button></form>' . $actions;
+    }
+    $contact = $valide
+        ? '<span class="pc-date pc-contact"><small>Validé le ' . izr_date($c['valide']) . '</small>' . izr_h(($c['contact']['nom'] ?? '') . ' · ' . ($c['contact']['email'] ?? '') . (($c['contact']['telephone'] ?? '') !== '' ? ' · ' . $c['contact']['telephone'] : ''))
+            . '<small>' . (empty($c['envoye']) ? 'Informations pas encore envoyées' : 'Informations envoyées le ' . izr_date($c['envoye'])) . '</small></span>'
+        : '<span class="pc-date pc-contact"><small>Validation</small>—</span>';
     if ($a['type'] === 'magasin') {
         $actions .= '<a class="pc-btn" href="/assets/qr/2027/' . izr_h($id) . '.svg" download="qr-2027-' . izr_h($id) . '.svg">QR code 2027</a>';
     }
     return '<li><div class="pc-qui"><b>' . izr_h($a['nom']) . '</b><code>' . izr_h($id) . '</code></div>'
         . '<span class="pc-etat ' . $etat[1] . '">' . $etat[0] . '</span>'
-        . '<span class="pc-date"><small>Mot de passe généré</small>' . izr_date($c['genere'] ?? null) . '</span>'
-        . '<span class="pc-date"><small>Dernière connexion</small>' . izr_date($c['derniere_connexion'] ?? null) . '</span>'
+        . '<span class="pc-date"><small>Mot de passe généré</small>' . izr_date($c['genere'] ?? null) . '<small>Dernière connexion</small>' . izr_date($c['derniere_connexion'] ?? null) . '</span>'
+        . $contact
         . '<div class="pc-actions">' . $actions . '</div></li>';
 }
 
@@ -267,10 +402,10 @@ function izr_console_afficher(array $resultat, string $jeton, array $get): void
     $q = trim((string) ($get['q'] ?? ''));
     $retour = 'espace-pro.html?' . izr_h(http_build_query(array_filter(['vue' => 'comptes', 'enseigne' => $vue, 'q' => $q], 'strlen')));
 
-    $n = ['actif' => 0, 'sans' => 0, 'suspendu' => 0];
+    $n = ['valide' => 0, 'attente' => 0, 'sans' => 0, 'suspendu' => 0];
     foreach ($annuaire as $id => $a) {
         $c = $comptes[$id] ?? [];
-        $n[empty($c['empreinte']) ? 'sans' : (!empty($c['actif']) ? 'actif' : 'suspendu')]++;
+        $n[empty($c['empreinte']) ? 'sans' : (empty($c['actif']) ? 'suspendu' : (!empty($c['valide']) ? 'valide' : 'attente'))]++;
     }
 
     echo '<div class="ps pc"><div class="ps-tete"><div><span class="kicker">Administration IzenRide</span><h1>Comptes</h1>'
@@ -299,7 +434,8 @@ function izr_console_afficher(array $resultat, string $jeton, array $get): void
     }
 
     echo '<div class="ps-tuiles">'
-        . '<div class="ps-tuile"><span class="ps-etq">Comptes actifs</span><b>' . $n['actif'] . '</b><small>peuvent se connecter</small></div>'
+        . '<div class="ps-tuile"><span class="ps-etq">Comptes validés</span><b>' . $n['valide'] . '</b><small>coordonnées confirmées</small></div>'
+        . '<div class="ps-tuile"><span class="ps-etq">En attente</span><b>' . $n['attente'] . '</b><small>mot de passe remis, pas encore validé</small></div>'
         . '<div class="ps-tuile"><span class="ps-etq">Sans mot de passe</span><b>' . $n['sans'] . '</b><small>pas encore ouverts</small></div>'
         . '<div class="ps-tuile"><span class="ps-etq">Suspendus</span><b>' . $n['suspendu'] . '</b><small>connexion refusée</small></div></div>';
 
