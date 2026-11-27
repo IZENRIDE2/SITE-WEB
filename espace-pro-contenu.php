@@ -116,14 +116,14 @@ $izrJeton = izr_h($_SESSION['jeton']);
   <div class="ps">
     <div><span class="kicker">Espace pro</span><h1>Bienvenue</h1><p class="lede"><?= izr_h($izrPartenaire['nom']) ?></p></div>
 <?php if (!empty($izrCompte['valide'])) : ?>
-    <p class="ps-note" role="status"><strong>Votre compte est validé</strong> depuis le <?= izr_date($izrCompte['valide']) ?>. IzenRide vous enverra vos informations (accès, QR code, mode d'emploi) à l'adresse <?= izr_h($izrCompte['contact']['email'] ?? '') ?>.</p>
+    <p class="ps-note" role="status"><strong>Votre compte est validé</strong> depuis le <?= izr_date($izrCompte['valide']) ?>. <?= empty($izrCompte['envoye']) ? 'IzenRide vous enverra vos informations' : 'Vos informations vous ont été envoyées' ?> (accès, QR code, mode d'emploi) à l'adresse <?= izr_h($izrCompte['contact']['email'] ?? '') ?>.<?= empty($izrCompte['envoye']) ? '' : ' Pensez à vérifier vos courriers indésirables.' ?></p>
     <p class="lede">Contact : <?= izr_h(($izrCompte['contact']['nom'] ?? '') . (($izrCompte['contact']['telephone'] ?? '') !== '' ? ' · ' . $izrCompte['contact']['telephone'] : '')) ?>. Pour modifier ces coordonnées, écrivez à <a href="mailto:support@izenride.com">support@izenride.com</a>.</p>
 <?php else : ?>
     <form class="pro-carte pro-validation" method="post" action="espace-pro.html">
       <input type="hidden" name="jeton" value="<?= $izrJeton ?>">
       <input type="hidden" name="action" value="valider">
       <h2>Validez votre compte</h2>
-      <p class="pro-note">Confirmez vos coordonnées : IzenRide vous enverra ensuite vos informations (accès, QR code, mode d'emploi).</p>
+      <p class="pro-note">Confirmez vos coordonnées : vos informations (accès, QR code, mode d'emploi) vous seront envoyées aussitôt par e-mail.</p>
 <?php if ($izrErreurValidation !== '') : ?>
       <p class="pro-alerte" role="alert"><?= izr_h($izrErreurValidation) ?></p>
 <?php endif; ?>
