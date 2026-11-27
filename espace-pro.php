@@ -74,6 +74,12 @@ if ($adminEmail === '' || $adminSecret === '') {
         }
     }
 }
+// Mot de passe changé depuis l'espace pro (« Mon compte ») : seule son empreinte est conservée, dans
+// un fichier au-dessus du dossier du site. Elle prime sur les deux sources précédentes.
+$adminChange = json_decode((string) @file_get_contents(izr_fichier_admin()), true);
+if (is_array($adminChange) && strncmp((string) ($adminChange['empreinte'] ?? ''), '$2y$', 4) === 0 && $adminEmail !== '') {
+    $adminSecret = (string) $adminChange['empreinte'];
+}
 $estEmpreinte = strncmp($adminSecret, '$2y$', 4) === 0;
 $configure = $adminEmail !== '' && ($estEmpreinte || strlen($adminSecret) >= 12);
 // La session est liée aux identifiants en vigueur : les changer déconnecte tout le monde.
@@ -176,7 +182,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if ($connecte || $partenaire !== null) {
     $_SESSION['vu'] = time();
     // Les statistiques et la console des comptes sont réservées à l'administrateur.
-    $izrVue = !$connecte ? 'accueil' : (($_GET['vue'] ?? '') === 'comptes' ? 'comptes' : 'stats');
+    $izrVue = !$connecte ? 'accueil' : (in_array($_GET['vue'] ?? '', ['comptes', 'compte'], true) ? (string) $_GET['vue'] : 'stats');
+    $izrErreurCompte = '';
+    if ($izrVue === 'compte' && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'changer_mot_de_passe') {
+        $actuel = (string) ($_POST['actuel'] ?? '');
+        $nouveau = (string) ($_POST['nouveau'] ?? '');
+        $actuelOk = $estEmpreinte ? password_verify($actuel, $adminSecret) : hash_equals($adminSecret, $actuel);
+        if (!$jetonOk) {
+            $izrErreurCompte = 'La page a expiré. Rechargez-la et réessayez.';
+        } elseif (izr_essais()['n'] >= IZR_PRO_ESSAIS_MAX) {
+            $izrErreurCompte = 'Trop de tentatives. Réessayez dans un quart d\'heure.';
+        } elseif (!$actuelOk) {
+            izr_noter_echec();
+            $izrErreurCompte = 'Le mot de passe actuel est incorrect.';
+        } elseif (strlen($nouveau) < 14) {
+            $izrErreurCompte = 'Le nouveau mot de passe doit compter au moins 14 caractères.';
+        } elseif ($nouveau === $actuel) {
+            $izrErreurCompte = 'Le nouveau mot de passe doit être différent de l\'actuel.';
+        } elseif ($nouveau !== (string) ($_POST['confirmation'] ?? '')) {
+            $izrErreurCompte = 'Les deux saisies du nouveau mot de passe ne sont pas identiques.';
+        } elseif (!izr_admin_enregistrer(password_hash($nouveau, PASSWORD_BCRYPT))) {
+            $izrErreurCompte = 'L\'hébergement a refusé l\'enregistrement. Le mot de passe n\'a pas changé.';
+        } else {
+            // L'ancien mot de passe en clair ne doit plus exister nulle part sur l'hébergement.
+            $ancien = dirname(__DIR__) . '/espace-pro-admin.php';
+            if (is_file($ancien) && !izr_env('ESPACE_PRO_ADMIN_EMAIL')) {
+                @file_put_contents($ancien, '<?php return ' . var_export(['email' => $adminEmail, 'mot_de_passe' => ''], true) . ";\n", LOCK_EX);
+            }
+            $_SESSION = [];
+            session_regenerate_id(true);
+            header('Location: /espace-pro.html?change=1', true, 303);
+            exit;
+        }
+    }
     $izrPartenaire = $partenaire !== null ? izr_annuaire()[$partenaire] : null;
     $izrConsole = ['message' => '', 'erreur' => '', 'generes' => []];
     $izrErreurValidation = '';
@@ -223,7 +261,6 @@ $jeton = htmlspecialchars($_SESSION['jeton'], ENT_QUOTES, 'UTF-8');
 <link rel="stylesheet" href="assets/css/fonts.css?v=20261020">
 <link rel="stylesheet" href="assets/css/site.css?v=20261102b">
 <link rel="stylesheet" href="assets/css/page.css?v=20261102">
-<script defer src="https://izeninfo.fr/stats/t.js" data-site="izenride"></script>
 <style>
 .pro-acces{max-width:460px;margin:clamp(40px,8vw,96px) auto;padding:0 20px}
 .pro-acces h1{font-family:var(--body);font-weight:700;font-size:clamp(2rem,4vw,2.8rem);line-height:1.05;letter-spacing:-.03em;margin:14px 0 12px}
@@ -265,6 +302,9 @@ $jeton = htmlspecialchars($_SESSION['jeton'], ENT_QUOTES, 'UTF-8');
     <span class="kicker">Espace pro</span>
     <h1 id="page-title">Connexion à l'espace pro</h1>
     <p class="lede">Cet espace est réservé. Connectez-vous avec votre compte professionnel.</p>
+<?php if (($_GET['change'] ?? '') === '1' && $erreur === '') : ?>
+    <p class="pro-note" role="status"><strong>Mot de passe modifié.</strong> Reconnectez-vous avec le nouveau.</p>
+<?php endif; ?>
     <form class="pro-carte" method="post" action="espace-pro.html" autocomplete="on">
       <input type="hidden" name="jeton" value="<?= $jeton ?>">
       <input type="hidden" name="action" value="connexion">

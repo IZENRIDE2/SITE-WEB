@@ -1,7 +1,7 @@
 <?php
 // Contenu réservé : servi uniquement par espace-pro.php après connexion.
 if (!defined('IZR_PRO_OK')) { http_response_code(404); exit; }
-$izrTitres = ['stats' => 'Statistiques', 'comptes' => 'Comptes', 'accueil' => 'Votre espace'];
+$izrTitres = ['stats' => 'Statistiques', 'comptes' => 'Comptes', 'compte' => 'Mon compte', 'accueil' => 'Votre espace'];
 $izrJeton = izr_h($_SESSION['jeton']);
 ?>
 <!doctype html>
@@ -37,7 +37,6 @@ $izrJeton = izr_h($_SESSION['jeton']);
 <link rel="stylesheet" href="assets/css/site.css?v=20261102b">
 <link rel="stylesheet" href="assets/css/page.css?v=20261102">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "IzenRide", "item": "https://izenride.fr/"}, {"@type": "ListItem", "position": 2, "name": "Espace pro", "item": "https://izenride.fr/espace-pro.html"}]}</script>
-<script defer src="https://izeninfo.fr/stats/t.js" data-site="izenride"></script>
 <style>
 .pro-acces{max-width:460px;margin:clamp(40px,8vw,96px) auto;padding:0 20px}
 .pro-acces h1{font-family:var(--body);font-weight:700;font-size:clamp(2rem,4vw,2.8rem);line-height:1.05;letter-spacing:-.03em;margin:14px 0 12px}
@@ -66,7 +65,7 @@ $izrJeton = izr_h($_SESSION['jeton']);
 .pro-barre button{min-height:44px;padding:0 16px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
 </style>
 <link rel="stylesheet" href="assets/css/espace-pro.css?v=20261127h">
-<?php if ($izrVue !== 'comptes') : ?>
+<?php if ($izrVue === 'stats' || $izrVue === 'accueil') : ?>
 <script defer src="assets/js/espace-pro-stats.js?v=20261127h"></script>
 <?php endif; ?>
 </head>
@@ -98,6 +97,7 @@ $izrJeton = izr_h($_SESSION['jeton']);
     <nav class="pro-vues" aria-label="Administration">
       <a href="espace-pro.html"<?= $izrVue === 'stats' ? ' aria-current="page"' : '' ?>>Statistiques</a>
       <a href="espace-pro.html?vue=comptes"<?= $izrVue === 'comptes' ? ' aria-current="page"' : '' ?>>Comptes</a>
+      <a href="espace-pro.html?vue=compte"<?= $izrVue === 'compte' ? ' aria-current="page"' : '' ?>>Mon compte</a>
     </nav>
 <?php endif; ?>
     <form method="post" action="espace-pro.html">
@@ -110,6 +110,32 @@ $izrJeton = izr_h($_SESSION['jeton']);
 <?php if ($izrVue === 'stats') : ?>
   <script type="application/json" id="pro-donnees"><?= json_encode(izr_scans_30_jours(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
   <div class="ps" id="pro-stats"><noscript><p class="ps-note">Cette page a besoin de JavaScript pour afficher les statistiques.</p></noscript></div>
+<?php elseif ($izrVue === 'compte') : ?>
+  <div class="ps">
+    <div><span class="kicker">Administration IzenRide</span><h1>Mon compte</h1><p class="lede">Compte administrateur de l'espace pro</p></div>
+    <form class="pro-carte pro-validation" method="post" action="espace-pro.html?vue=compte" autocomplete="off">
+      <input type="hidden" name="jeton" value="<?= $izrJeton ?>">
+      <input type="hidden" name="action" value="changer_mot_de_passe">
+      <h2>Changer le mot de passe</h2>
+      <p class="pro-note">Seule l'empreinte du nouveau mot de passe est conservée. Vous serez déconnecté et devrez vous reconnecter.</p>
+<?php if ($izrErreurCompte !== '') : ?>
+      <p class="pro-alerte" role="alert"><?= izr_h($izrErreurCompte) ?></p>
+<?php endif; ?>
+      <div class="pro-champ">
+        <label for="actuel">Mot de passe actuel</label>
+        <input id="actuel" name="actuel" type="password" required autocomplete="current-password">
+      </div>
+      <div class="pro-champ">
+        <label for="nouveau">Nouveau mot de passe (14 caractères au moins)</label>
+        <input id="nouveau" name="nouveau" type="password" required minlength="14" autocomplete="new-password">
+      </div>
+      <div class="pro-champ">
+        <label for="confirmation">Nouveau mot de passe, une seconde fois</label>
+        <input id="confirmation" name="confirmation" type="password" required minlength="14" autocomplete="new-password">
+      </div>
+      <button class="btn btn-primary" type="submit">Changer le mot de passe</button>
+    </form>
+  </div>
 <?php elseif ($izrVue === 'comptes') : ?>
 <?php izr_console_afficher($izrConsole, $izrJeton, $_GET); ?>
 <?php else : ?>

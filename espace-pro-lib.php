@@ -99,6 +99,21 @@ function izr_verifier_partenaire(string $identifiant, string $motDePasse): ?stri
     return $identifiant;
 }
 
+function izr_fichier_admin(): string
+{
+    return dirname(__DIR__) . '/espace-pro-admin.json';
+}
+
+function izr_admin_enregistrer(string $empreinte): bool
+{
+    $tmp = izr_fichier_admin() . '.tmp';
+    if (@file_put_contents($tmp, json_encode(['empreinte' => $empreinte, 'change' => time()]), LOCK_EX) === false) {
+        return false;
+    }
+    @chmod($tmp, 0600);
+    return @rename($tmp, izr_fichier_admin());
+}
+
 function izr_fichier_scans(): string
 {
     return dirname(__DIR__) . '/espace-pro-scans.json';
@@ -379,6 +394,16 @@ function izr_console_traiter(array $post): array
         return $r;
     }
 
+    if ($action === 'reinitialiser' && isset($annuaire[$id])) {
+        $ok = izr_comptes_modifier(function (array &$tous) use ($id): void {
+            unset($tous[$id]);
+        });
+        $r[$ok ? 'message' : 'erreur'] = $ok
+            ? $annuaire[$id]['nom'] . ' : compte remis à zéro (mot de passe, validation et coordonnées effacés).'
+            : 'Le fichier des comptes n\'a pas pu être écrit sur l\'hébergement.';
+        return $r;
+    }
+
     if ($action === 'envoyer' && isset($annuaire[$id])) {
         $erreur = izr_envoyer_informations($id);
         if ($erreur !== '') {
@@ -406,7 +431,9 @@ function izr_console_ligne(string $id, array $a, array $c, string $jeton, string
     } else {
         $actions = '<details class="pc-details"><summary class="pc-btn">Nouveau mot de passe</summary>' . $form
             . '<p>L\'ancien mot de passe cessera de fonctionner tout de suite.</p><button class="pc-btn pc-btn-fort" name="action" value="generer">Confirmer</button></form></details>'
-            . $form . '<button class="pc-btn" name="action" value="' . ($actif ? 'suspendre' : 'reactiver') . '">' . ($actif ? 'Suspendre' : 'Réactiver') . '</button></form>';
+            . $form . '<button class="pc-btn" name="action" value="' . ($actif ? 'suspendre' : 'reactiver') . '">' . ($actif ? 'Suspendre' : 'Réactiver') . '</button></form>'
+            . '<details class="pc-details"><summary class="pc-btn">Remettre à zéro</summary>' . $form
+            . '<p>Efface le mot de passe, la validation et les coordonnées de ce compte. Les scans sont conservés.</p><button class="pc-btn pc-btn-fort" name="action" value="reinitialiser">Confirmer</button></form></details>';
     }
     if ($valide && $actif) {
         $actions = $form . '<button class="pc-btn pc-btn-fort" name="action" value="envoyer">' . (empty($c['envoye']) ? 'Envoyer les informations' : 'Renvoyer les informations') . '</button></form>' . $actions;
