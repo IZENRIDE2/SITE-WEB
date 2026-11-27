@@ -183,6 +183,9 @@ if ($connecte || $partenaire !== null) {
     if ($partenaire !== null && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'valider') {
         $izrErreurValidation = $jetonOk ? izr_valider_compte($partenaire, $_POST) : 'La page a expiré. Rechargez-la et réessayez.';
         if ($izrErreurValidation === '') {
+            // Les informations partent dès la validation. Si l'envoi échoue, le compte reste validé
+            // et la console propose « Envoyer les informations ».
+            izr_envoyer_informations($partenaire);
             header('Location: /espace-pro.html', true, 303);
             exit;
         }
