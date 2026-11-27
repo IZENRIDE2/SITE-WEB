@@ -11,8 +11,10 @@
  *   ESPACE_PRO_ADMIN_MOT_DE_PASSE   le mot de passe (12 caractères au moins), ou son empreinte
  *                                   bcrypt (commençant par $2y$)
  *
- * Tant que ces deux variables ne sont pas définies, PERSONNE ne peut se connecter : la page
- * est verrouillée pour tout le monde.
+ * À défaut, ils sont lus dans un fichier placé au-dessus du dossier du site (voir plus bas).
+ *
+ * Tant qu'aucun compte n'est défini, PERSONNE ne peut se connecter : la page est verrouillée
+ * pour tout le monde.
  */
 declare(strict_types=1);
 
@@ -54,6 +56,19 @@ function izr_noter_echec(): void
 
 $adminEmail = strtolower(trim(izr_env('ESPACE_PRO_ADMIN_EMAIL')));
 $adminSecret = izr_env('ESPACE_PRO_ADMIN_MOT_DE_PASSE');
+// Solution de repli si l'hébergement n'offre pas de variables d'environnement : un fichier placé
+// AU-DESSUS du dossier du site (donc jamais servi ni versionné), /espace-pro-admin.php, qui contient
+//   <?php return ['email' => '…', 'mot_de_passe' => '…'];
+if ($adminEmail === '' || $adminSecret === '') {
+    $fichierCompte = dirname(__DIR__) . '/espace-pro-admin.php';
+    if (is_file($fichierCompte)) {
+        $compte = require $fichierCompte;
+        if (is_array($compte)) {
+            $adminEmail = strtolower(trim((string) ($compte['email'] ?? '')));
+            $adminSecret = (string) ($compte['mot_de_passe'] ?? '');
+        }
+    }
+}
 $estEmpreinte = strncmp($adminSecret, '$2y$', 4) === 0;
 $configure = $adminEmail !== '' && ($estEmpreinte || strlen($adminSecret) >= 12);
 // La session est liée aux identifiants en vigueur : les changer déconnecte tout le monde.
