@@ -190,6 +190,7 @@ if ($connecte || $partenaire !== null) {
             exit;
         }
     }
+    $izrIdPartenaire = $partenaire;
     $izrCompte = $partenaire !== null ? (izr_comptes_lire()[$partenaire] ?? []) : [];
     if ($izrVue === 'comptes' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($jetonOk) {

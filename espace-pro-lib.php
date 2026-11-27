@@ -135,8 +135,9 @@ function izr_scan_noter(string $id): void
 }
 
 /** Les scans des 30 derniers jours, aujourd'hui en dernier : ['jours' => [dates], 'scans' => [id => [30 nombres]]]. */
-function izr_scans_30_jours(): array
+function izr_scans_30_jours(?array $ids = null, ?array $portee = null): array
 {
+    $permis = $ids === null ? null : array_flip($ids);
     $brut = @file_get_contents(izr_fichier_scans());
     $scans = is_string($brut) ? json_decode($brut, true) : null;
     $scans = is_array($scans) ? $scans : [];
@@ -147,13 +148,35 @@ function izr_scans_30_jours(): array
         $jour = $aujourdhui->modify('-' . (29 - $i) . ' days')->format('Y-m-d');
         $jours[] = $jour;
         foreach (($scans[$jour] ?? []) as $id => $n) {
+            if ($permis !== null && !isset($permis[$id])) {
+                continue; // un compte partenaire ne reçoit que ses propres magasins
+            }
             if (!isset($parMagasin[$id])) {
                 $parMagasin[$id] = array_fill(0, 30, 0);
             }
             $parMagasin[$id][$i] = (int) $n;
         }
     }
-    return ['jours' => $jours, 'scans' => $parMagasin];
+    return ['jours' => $jours, 'scans' => $parMagasin, 'portee' => $portee];
+}
+
+/** Les magasins dont ce compte peut voir les chiffres : le sien, ou ceux de son enseigne pour une maison mère. */
+function izr_magasins_du_compte(string $id): array
+{
+    $a = izr_annuaire()[$id] ?? null;
+    if ($a === null) {
+        return [];
+    }
+    if ($a['type'] === 'magasin') {
+        return [$id];
+    }
+    $ids = [];
+    foreach (izr_annuaire() as $i => $m) {
+        if ($m['type'] === 'magasin' && $m['enseigne'] === $a['enseigne']) {
+            $ids[] = $i;
+        }
+    }
+    return $ids;
 }
 
 /** Total des scans enregistrés pour ces magasins, toutes dates confondues. */
