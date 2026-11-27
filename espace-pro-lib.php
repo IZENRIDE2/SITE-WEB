@@ -191,6 +191,9 @@ function izr_console_ligne(string $id, array $a, array $c, string $jeton, string
             . '<p>L\'ancien mot de passe cessera de fonctionner tout de suite.</p><button class="pc-btn pc-btn-fort" name="action" value="generer">Confirmer</button></form></details>'
             . $form . '<button class="pc-btn" name="action" value="' . ($actif ? 'suspendre' : 'reactiver') . '">' . ($actif ? 'Suspendre' : 'Réactiver') . '</button></form>';
     }
+    if ($a['type'] === 'magasin') {
+        $actions .= '<a class="pc-btn" href="/assets/qr/2027/' . izr_h($id) . '.svg" download="qr-2027-' . izr_h($id) . '.svg">QR code 2027</a>';
+    }
     return '<li><div class="pc-qui"><b>' . izr_h($a['nom']) . '</b><code>' . izr_h($id) . '</code></div>'
         . '<span class="pc-etat ' . $etat[1] . '">' . $etat[0] . '</span>'
         . '<span class="pc-date"><small>Mot de passe généré</small>' . izr_date($c['genere'] ?? null) . '</span>'

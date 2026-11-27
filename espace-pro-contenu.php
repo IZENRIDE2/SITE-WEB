@@ -59,7 +59,7 @@ $izrJeton = izr_h($_SESSION['jeton']);
 .pro-vues a[aria-current="page"]{color:var(--ink);background:var(--asphalt);box-shadow:inset 0 0 0 1px var(--line)}
 .pro-barre button{min-height:44px;padding:0 16px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
 </style>
-<link rel="stylesheet" href="assets/css/espace-pro.css?v=20261127d">
+<link rel="stylesheet" href="assets/css/espace-pro.css?v=20261127e">
 <?php if ($izrVue === 'stats') : ?>
 <script defer src="assets/js/espace-pro-stats.js?v=20261127c"></script>
 <?php endif; ?>
