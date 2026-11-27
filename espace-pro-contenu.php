@@ -65,9 +65,9 @@ $izrJeton = izr_h($_SESSION['jeton']);
 .pro-vues a[aria-current="page"]{color:var(--ink);background:var(--asphalt);box-shadow:inset 0 0 0 1px var(--line)}
 .pro-barre button{min-height:44px;padding:0 16px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
 </style>
-<link rel="stylesheet" href="assets/css/espace-pro.css?v=20261127g">
-<?php if ($izrVue === 'stats') : ?>
-<script defer src="assets/js/espace-pro-stats.js?v=20261127f"></script>
+<link rel="stylesheet" href="assets/css/espace-pro.css?v=20261127h">
+<?php if ($izrVue !== 'comptes') : ?>
+<script defer src="assets/js/espace-pro-stats.js?v=20261127h"></script>
 <?php endif; ?>
 </head>
 <body class="page">
@@ -145,6 +145,8 @@ $izrJeton = izr_h($_SESSION['jeton']);
     </form>
 <?php endif; ?>
   </div>
+  <script type="application/json" id="pro-donnees"><?= json_encode(izr_scans_30_jours(izr_magasins_du_compte($izrIdPartenaire), ['type' => $izrPartenaire['type'], 'id' => $izrIdPartenaire, 'enseigne' => $izrPartenaire['enseigne']]), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
+  <div class="ps ps-partenaire" id="pro-stats"><noscript><p class="ps-note">Cette page a besoin de JavaScript pour afficher vos chiffres.</p></noscript></div>
 <?php endif; ?>
 </main>
 

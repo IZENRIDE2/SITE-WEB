@@ -214,3 +214,13 @@ a.ps-choix{display:inline-flex;align-items:center;text-decoration:none}
   .pc-date.pc-contact{display:flex;grid-column:1/-1}
   .pc-actions{grid-column:1/-1;justify-content:flex-start}
 }
+
+/* Vue d'un compte partenaire : pas de colonnes de chiffre d'affaires */
+.ps-partenaire{padding-top:0}
+.ps-partenaire .ps-entete-table,.ps-partenaire .ps-table li{grid-template-columns:32px minmax(0,1.6fr) minmax(0,1.2fr) repeat(3,minmax(56px,.5fr))}
+.ps-partenaire .ps-entete-table span:nth-child(n+7),.ps-partenaire .ps-table li span:nth-child(n+7){display:none}
+@media (max-width:640px){
+  .ps-partenaire .ps-entete-table,.ps-partenaire .ps-table li{grid-template-columns:minmax(0,1fr) repeat(3,minmax(44px,auto));gap:8px}
+  .ps-partenaire .ps-entete-table span:nth-child(n+4):nth-child(-n+6),.ps-partenaire .ps-table li span:nth-child(n+4):nth-child(-n+6){display:inline}
+  .ps-partenaire .ps-entete-table span:nth-child(1),.ps-partenaire .ps-entete-table span:nth-child(3),.ps-partenaire .ps-table li span:nth-child(1),.ps-partenaire .ps-table li span:nth-child(3){display:none}
+}
