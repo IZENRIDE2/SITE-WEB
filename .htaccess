@@ -18,7 +18,7 @@ RewriteRule ^espace-pro\.html$ espace-pro.php [L]
 # QR codes des magasins : /m/<identifiant>-<année>
 RewriteRule ^m/([a-z0-9-]+)$ qr.php?code=$1 [L]
 # Le contenu réservé n'est jamais servi directement
-RewriteRule ^espace-pro-(contenu|lib|annuaire)\.php$ - [R=404,L]
+RewriteRule ^espace-pro-(contenu|lib|annuaire|rapport)\.php$ - [R=404,L]
 
 # /index.html -> /
 RewriteCond %{THE_REQUEST} \s/index\.html[\s?] [NC]

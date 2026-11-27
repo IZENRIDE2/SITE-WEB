@@ -225,6 +225,20 @@ function izr_valider_compte(string $id, array $post): string
     return $ok ? '' : 'L\'enregistrement a échoué. Réessayez dans un instant.';
 }
 
+/** Envoie un e-mail en texte, avec d'éventuelles pièces jointes [['nom' => …, 'type' => …, 'contenu' => …]]. */
+function izr_courriel(string $a, string $objet, string $texte, array $pieces = []): bool
+{
+    $limite = 'izr-' . bin2hex(random_bytes(12));
+    $corps = '--' . $limite . "\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n" . chunk_split(base64_encode($texte));
+    foreach ($pieces as $p) {
+        $corps .= '--' . $limite . "\r\nContent-Type: " . $p['type'] . '; name="' . $p['nom'] . "\"\r\nContent-Transfer-Encoding: base64\r\n"
+            . 'Content-Disposition: attachment; filename="' . $p['nom'] . "\"\r\n\r\n" . chunk_split(base64_encode($p['contenu']));
+    }
+    $corps .= '--' . $limite . "--\r\n";
+    $entetes = "From: IzenRide <support@izenride.com>\r\nReply-To: support@izenride.com\r\nMIME-Version: 1.0\r\nContent-Type: multipart/mixed; boundary=\"" . $limite . '"';
+    return @mail($a, mb_encode_mimeheader($objet, 'UTF-8', 'B', "\r\n"), $corps, $entetes);
+}
+
 /** Envoie au compte validé ses accès, son QR code, le mode d'emploi et ses chiffres. Rend un message d'erreur, ou ''. */
 function izr_envoyer_informations(string $id): string
 {
@@ -275,17 +289,12 @@ function izr_envoyer_informations(string $id): string
     }
     $t .= "Une question ? Écrivez-nous à support@izenride.com.\n\nL'équipe IzenRide\n";
 
-    $limite = 'izr-' . bin2hex(random_bytes(12));
-    $corps = '--' . $limite . "\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n" . chunk_split(base64_encode($t));
+    $pieces = [];
     $image = $estMagasin ? @file_get_contents(__DIR__ . '/assets/qr/2027/' . $id . '.png') : false;
     if (is_string($image)) {
-        $corps .= '--' . $limite . "\r\nContent-Type: image/png; name=\"qr-code-2027-" . $id . ".png\"\r\nContent-Transfer-Encoding: base64\r\n"
-            . 'Content-Disposition: attachment; filename="qr-code-2027-' . $id . ".png\"\r\n\r\n" . chunk_split(base64_encode($image));
+        $pieces[] = ['nom' => 'qr-code-2027-' . $id . '.png', 'type' => 'image/png', 'contenu' => $image];
     }
-    $corps .= '--' . $limite . "--\r\n";
-    $entetes = "From: IzenRide <support@izenride.com>\r\nReply-To: support@izenride.com\r\nMIME-Version: 1.0\r\nContent-Type: multipart/mixed; boundary=\"" . $limite . '"';
-    $objet = mb_encode_mimeheader('IzenRide : vos informations partenaire (' . $nomCourt . ')', 'UTF-8', 'B', "\r\n");
-    if (!@mail($email, $objet, $corps, $entetes)) {
+    if (!izr_courriel($email, 'IzenRide : vos informations partenaire (' . $nomCourt . ')', $t, $pieces)) {
         return 'L\'hébergement a refusé l\'envoi de l\'e-mail à ' . $email . '.';
     }
     izr_comptes_modifier(function (array &$tous) use ($id): void {
