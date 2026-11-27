@@ -1,13 +1,15 @@
 <?php
 // Contenu réservé : servi uniquement par espace-pro.php après connexion.
 if (!defined('IZR_PRO_OK')) { http_response_code(404); exit; }
+$izrTitres = ['stats' => 'Statistiques', 'comptes' => 'Comptes', 'accueil' => 'Votre espace'];
+$izrJeton = izr_h($_SESSION['jeton']);
 ?>
 <!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Statistiques — Espace pro IzenRide</title>
+<title><?= $izrTitres[$izrVue] ?> — Espace pro IzenRide</title>
 <link rel="canonical" href="https://izenride.fr/espace-pro.html">
 <meta name="description" content="L'espace pro IzenRide pour les enseignes et les magasins moto : un QR code par magasin, un accès par enseigne et le suivi des inscriptions. Ouverture prochaine.">
 <meta name="robots" content="noindex, nofollow">
@@ -51,10 +53,16 @@ if (!defined('IZR_PRO_OK')) { http_response_code(404); exit; }
 .pro-barre{border-bottom:1px solid var(--line);background:var(--deck)}
 .pro-barre .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 24px;padding-block:10px;font-size:.95rem;color:var(--mute)}
 .pro-barre form{margin:0}
+.pro-vues{display:flex;gap:4px}
+.pro-vues a{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:10px;color:var(--mute);font-weight:600;text-decoration:none}
+.pro-vues a:hover{color:var(--ink)}
+.pro-vues a[aria-current="page"]{color:var(--ink);background:var(--asphalt);box-shadow:inset 0 0 0 1px var(--line)}
 .pro-barre button{min-height:44px;padding:0 16px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
 </style>
-<link rel="stylesheet" href="assets/css/espace-pro.css?v=20261127c">
+<link rel="stylesheet" href="assets/css/espace-pro.css?v=20261127d">
+<?php if ($izrVue === 'stats') : ?>
 <script defer src="assets/js/espace-pro-stats.js?v=20261127c"></script>
+<?php endif; ?>
 </head>
 <body class="page">
 <a class="skip" href="#contenu">Aller au contenu</a>
@@ -78,15 +86,31 @@ if (!defined('IZR_PRO_OK')) { http_response_code(404); exit; }
 <main id="contenu">
 <div class="pro-barre">
   <div class="wrap">
-    <span>Connecté à l'espace pro en tant qu'administrateur IzenRide.</span>
+<?php if ($izrVue === 'accueil') : ?>
+    <span>Connecté à l'espace pro : <?= izr_h($izrPartenaire['nom']) ?>.</span>
+<?php else : ?>
+    <nav class="pro-vues" aria-label="Administration">
+      <a href="espace-pro.html"<?= $izrVue === 'stats' ? ' aria-current="page"' : '' ?>>Statistiques</a>
+      <a href="espace-pro.html?vue=comptes"<?= $izrVue === 'comptes' ? ' aria-current="page"' : '' ?>>Comptes</a>
+    </nav>
+<?php endif; ?>
     <form method="post" action="espace-pro.html">
-      <input type="hidden" name="jeton" value="<?= htmlspecialchars($_SESSION['jeton'], ENT_QUOTES, 'UTF-8') ?>">
+      <input type="hidden" name="jeton" value="<?= $izrJeton ?>">
       <input type="hidden" name="action" value="deconnexion">
       <button type="submit">Se déconnecter</button>
     </form>
   </div>
 </div>
+<?php if ($izrVue === 'stats') : ?>
   <div class="ps" id="pro-stats"><noscript><p class="ps-note">Cette page a besoin de JavaScript pour afficher les statistiques.</p></noscript></div>
+<?php elseif ($izrVue === 'comptes') : ?>
+<?php izr_console_afficher($izrConsole, $izrJeton, $_GET); ?>
+<?php else : ?>
+  <div class="ps">
+    <div><span class="kicker">Espace pro</span><h1>Bienvenue</h1><p class="lede"><?= izr_h($izrPartenaire['nom']) ?></p></div>
+    <p class="ps-note"><strong>Votre accès est ouvert.</strong> Les outils de votre espace sont en cours de préparation : vous les retrouverez ici dès leur mise en ligne.</p>
+  </div>
+<?php endif; ?>
 </main>
 
 <footer>

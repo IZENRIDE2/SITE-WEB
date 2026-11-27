@@ -3,7 +3,9 @@
  * Espace pro — accès verrouillé.
  *
  * L'adresse publique reste /espace-pro.html (réécrite vers ce fichier par .htaccess).
- * Un seul compte existe pour l'instant : l'administrateur IzenRide. Ses identifiants ne sont
+ * Trois sortes de comptes : l'administrateur IzenRide (statistiques et console des comptes), les
+ * maisons mères et les magasins (créés depuis la console, voir espace-pro-lib.php).
+ * Les identifiants de l'administrateur ne sont
  * PAS dans le dépôt (qui est public) : ils sont lus dans deux variables d'environnement de
  * l'hébergement OVH (onglet « Variables d'environnement ») :
  *
@@ -17,6 +19,9 @@
  * pour tout le monde.
  */
 declare(strict_types=1);
+
+const IZR_PRO = true;
+require __DIR__ . '/espace-pro-lib.php';
 
 const IZR_PRO_ESSAIS_MAX = 8;        // échecs tolérés par adresse IP…
 const IZR_PRO_FENETRE = 900;         // …sur 15 minutes
@@ -96,8 +101,20 @@ $connecte = $configure
     && ($_SESSION['admin'] ?? false) === true
     && hash_equals($empreinteCompte, (string) ($_SESSION['compte'] ?? ''))
     && (time() - (int) ($_SESSION['vu'] ?? 0)) <= IZR_PRO_DUREE_SESSION;
-if (!$connecte) {
-    unset($_SESSION['admin'], $_SESSION['compte'], $_SESSION['vu']);
+// Compte de maison mère ou de magasin : il doit toujours exister, être actif et porter le même
+// mot de passe qu'à la connexion (le suspendre ou régénérer son mot de passe ferme sa session).
+$partenaire = null;
+if (!$connecte && is_string($_SESSION['partenaire'] ?? null)) {
+    $idP = $_SESSION['partenaire'];
+    $cP = izr_comptes_lire()[$idP] ?? null;
+    if (isset(izr_annuaire()[$idP]) && is_array($cP) && !empty($cP['actif']) && !empty($cP['empreinte'])
+        && hash_equals(izr_empreinte_session($idP, $cP), (string) ($_SESSION['compte'] ?? ''))
+        && (time() - (int) ($_SESSION['vu'] ?? 0)) <= IZR_PRO_DUREE_SESSION) {
+        $partenaire = $idP;
+    }
+}
+if (!$connecte && $partenaire === null) {
+    unset($_SESSION['admin'], $_SESSION['partenaire'], $_SESSION['compte'], $_SESSION['vu']);
 }
 
 $erreur = '';
@@ -119,12 +136,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($essais['n'] >= IZR_PRO_ESSAIS_MAX) {
             http_response_code(429);
             $erreur = 'Trop de tentatives. Réessayez dans un quart d\'heure.';
-        } elseif (!$configure) {
-            $erreur = 'L\'accès n\'est pas encore configuré.';
         } else {
             $email = strtolower(trim((string) ($_POST['email'] ?? '')));
             $motDePasse = (string) ($_POST['mot_de_passe'] ?? '');
-            $emailOk = hash_equals($adminEmail, $email);
+            $emailOk = $configure && hash_equals($adminEmail, $email);
             $secretOk = $estEmpreinte
                 ? password_verify($motDePasse, $adminSecret)
                 : hash_equals($adminSecret, $motDePasse);
@@ -138,16 +153,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: /espace-pro.html', true, 303);
                 exit;
             }
+            $idP = $emailOk ? null : izr_verifier_partenaire($email, $motDePasse);
+            if ($idP !== null) {
+                session_regenerate_id(true);
+                unset($_SESSION['admin']);
+                $_SESSION['partenaire'] = $idP;
+                $_SESSION['compte'] = izr_empreinte_session($idP, izr_comptes_lire()[$idP]);
+                $_SESSION['vu'] = time();
+                $_SESSION['jeton'] = bin2hex(random_bytes(32));
+                @unlink(izr_fichier_essais());
+                header('Location: /espace-pro.html', true, 303);
+                exit;
+            }
             izr_noter_echec();
             usleep(700000);
             http_response_code(401);
-            $erreur = 'Adresse e-mail ou mot de passe incorrect.';
+            $erreur = 'Identifiant ou mot de passe incorrect.';
         }
     }
 }
 
-if ($connecte) {
+if ($connecte || $partenaire !== null) {
     $_SESSION['vu'] = time();
+    // Les statistiques et la console des comptes sont réservées à l'administrateur.
+    $izrVue = !$connecte ? 'accueil' : (($_GET['vue'] ?? '') === 'comptes' ? 'comptes' : 'stats');
+    $izrPartenaire = $partenaire !== null ? izr_annuaire()[$partenaire] : null;
+    $izrConsole = ['message' => '', 'erreur' => '', 'generes' => []];
+    if ($izrVue === 'comptes' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        if ($jetonOk) {
+            $izrConsole = izr_console_traiter($_POST);
+        } else {
+            $izrConsole['erreur'] = 'La page a expiré. Rechargez-la et réessayez.';
+        }
+    }
     define('IZR_PRO_OK', true);
     require __DIR__ . '/espace-pro-contenu.php';
     exit;
@@ -224,8 +262,8 @@ $jeton = htmlspecialchars($_SESSION['jeton'], ENT_QUOTES, 'UTF-8');
       <p class="pro-note" role="status">L'accès est en cours de configuration : aucune connexion n'est possible pour l'instant.</p>
 <?php endif; ?>
       <div class="pro-champ">
-        <label for="email">Adresse e-mail</label>
-        <input id="email" name="email" type="email" required autocomplete="username" inputmode="email">
+        <label for="email">Identifiant ou adresse e-mail</label>
+        <input id="email" name="email" type="text" required autocomplete="username" autocapitalize="none" spellcheck="false">
       </div>
       <div class="pro-champ">
         <label for="mot_de_passe">Mot de passe</label>
