@@ -99,6 +99,63 @@ function izr_verifier_partenaire(string $identifiant, string $motDePasse): ?stri
     return $identifiant;
 }
 
+function izr_fichier_scans(): string
+{
+    return dirname(__DIR__) . '/espace-pro-scans.json';
+}
+
+/** Compte un scan pour ce magasin, au jour courant (heure française). Format : {"2027-01-01": {"maxxess-nice": 3}}. */
+function izr_scan_noter(string $id): void
+{
+    $fichier = izr_fichier_scans();
+    $verrou = @fopen($fichier . '.verrou', 'c');
+    if ($verrou === false || !flock($verrou, LOCK_EX)) {
+        return;
+    }
+    try {
+        $brut = @file_get_contents($fichier);
+        $scans = is_string($brut) ? json_decode($brut, true) : null;
+        if (!is_array($scans)) {
+            if (is_string($brut) && $brut !== '') {
+                return; // fichier illisible : on ne l'écrase pas
+            }
+            $scans = [];
+        }
+        $jour = (new DateTimeImmutable('now', new DateTimeZone(IZR_FUSEAU_DAFFICHAGE)))->format('Y-m-d');
+        $scans[$jour][$id] = (int) ($scans[$jour][$id] ?? 0) + 1;
+        $json = json_encode($scans);
+        if ($json !== false && @file_put_contents($fichier . '.tmp', $json) !== false) {
+            @chmod($fichier . '.tmp', 0600);
+            @rename($fichier . '.tmp', $fichier);
+        }
+    } finally {
+        flock($verrou, LOCK_UN);
+        fclose($verrou);
+    }
+}
+
+/** Les scans des 30 derniers jours, aujourd'hui en dernier : ['jours' => [dates], 'scans' => [id => [30 nombres]]]. */
+function izr_scans_30_jours(): array
+{
+    $brut = @file_get_contents(izr_fichier_scans());
+    $scans = is_string($brut) ? json_decode($brut, true) : null;
+    $scans = is_array($scans) ? $scans : [];
+    $aujourdhui = new DateTimeImmutable('today', new DateTimeZone(IZR_FUSEAU_DAFFICHAGE));
+    $jours = [];
+    $parMagasin = [];
+    for ($i = 0; $i < 30; $i++) {
+        $jour = $aujourdhui->modify('-' . (29 - $i) . ' days')->format('Y-m-d');
+        $jours[] = $jour;
+        foreach (($scans[$jour] ?? []) as $id => $n) {
+            if (!isset($parMagasin[$id])) {
+                $parMagasin[$id] = array_fill(0, 30, 0);
+            }
+            $parMagasin[$id][$i] = (int) $n;
+        }
+    }
+    return ['jours' => $jours, 'scans' => $parMagasin];
+}
+
 function izr_date(?int $t): string
 {
     if (!$t) {
