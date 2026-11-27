@@ -1,3 +1,7 @@
+<?php
+// Contenu réservé : servi uniquement par espace-pro.php après connexion.
+if (!defined('IZR_PRO_OK')) { http_response_code(404); exit; }
+?>
 <!doctype html>
 <html lang="fr">
 <head>
@@ -6,7 +10,7 @@
 <title>Espace pro pour les enseignes et magasins moto — IzenRide</title>
 <link rel="canonical" href="https://izenride.fr/espace-pro.html">
 <meta name="description" content="L'espace pro IzenRide pour les enseignes et les magasins moto : un QR code par magasin, un accès par enseigne et le suivi des inscriptions. Ouverture prochaine.">
-<meta name="robots" content="noindex, follow">
+<meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#000000">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Espace pro pour les enseignes et magasins moto — IzenRide">
@@ -32,6 +36,23 @@
 <link rel="stylesheet" href="assets/css/page.css?v=20261102">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "IzenRide", "item": "https://izenride.fr/"}, {"@type": "ListItem", "position": 2, "name": "Espace pro", "item": "https://izenride.fr/espace-pro.html"}]}</script>
 <script defer src="https://izeninfo.fr/stats/t.js" data-site="izenride"></script>
+<style>
+.pro-acces{max-width:460px;margin:clamp(40px,8vw,96px) auto;padding:0 20px}
+.pro-acces h1{font-family:var(--body);font-weight:700;font-size:clamp(2rem,4vw,2.8rem);line-height:1.05;letter-spacing:-.03em;margin:14px 0 12px}
+.pro-acces .lede{color:var(--mute);margin:0 0 28px}
+.pro-carte{background:var(--deck);border:1px solid var(--line);border-radius:var(--r-lg);padding:28px;display:flex;flex-direction:column;gap:18px}
+.pro-champ{display:flex;flex-direction:column;gap:6px}
+.pro-champ label{font-size:.95rem;font-weight:500}
+.pro-champ input{min-height:48px;box-sizing:border-box;padding:0 14px;border:1px solid #5A6375;border-radius:10px;background:var(--asphalt);color:var(--ink);font:inherit}
+.pro-champ input:focus{outline:2px solid var(--glow);outline-offset:2px}
+.pro-carte .btn{min-height:50px;justify-content:center;border:0;cursor:pointer;font:inherit;font-weight:600}
+.pro-alerte{margin:0;padding:12px 14px;border:1px solid var(--sos);border-radius:10px;background:#1A0F10;color:var(--ink);font-size:.95rem}
+.pro-note{margin:0;font-size:.9rem;color:var(--mute)}
+.pro-barre{border-bottom:1px solid var(--line);background:var(--deck)}
+.pro-barre .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 24px;padding-block:10px;font-size:.95rem;color:var(--mute)}
+.pro-barre form{margin:0}
+.pro-barre button{min-height:44px;padding:0 16px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
+</style>
 </head>
 <body class="page">
 <a class="skip" href="#contenu">Aller au contenu</a>
@@ -50,6 +71,17 @@
     <a class="btn btn-primary" href="#telecharger">Télécharger</a>
   </div>
 </header>
+<div class="pro-barre">
+  <div class="wrap">
+    <span>Connecté à l'espace pro en tant qu'administrateur IzenRide.</span>
+    <form method="post" action="espace-pro.html">
+      <input type="hidden" name="jeton" value="<?= htmlspecialchars($_SESSION['jeton'], ENT_QUOTES, 'UTF-8') ?>">
+      <input type="hidden" name="action" value="deconnexion">
+      <button type="submit">Se déconnecter</button>
+    </form>
+  </div>
+</div>
+
 
 <main id="contenu">
   <nav class="crumbs wrap" aria-label="Fil d'Ariane">

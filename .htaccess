@@ -13,6 +13,11 @@ RewriteCond %{SERVER_PORT} ^80$ [OR]
 RewriteCond %{HTTP_HOST} !^izenride\.fr$ [NC]
 RewriteRule ^(.*)$ https://izenride.fr/$1 [R=301,L]
 
+# Espace pro : la page est servie par espace-pro.php, qui exige une connexion
+RewriteRule ^espace-pro\.html$ espace-pro.php [L]
+# Le contenu réservé n'est jamais servi directement
+RewriteRule ^espace-pro-contenu\.php$ - [R=404,L]
+
 # /index.html -> /
 RewriteCond %{THE_REQUEST} \s/index\.html[\s?] [NC]
 RewriteRule ^index\.html$ https://izenride.fr/ [R=301,L]
