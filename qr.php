@@ -6,6 +6,7 @@
 declare(strict_types=1);
 
 const IZR_PRO = true;
+require __DIR__ . '/espace-pro-lib.php';
 const IZR_FUSEAU_QR = 'Europe/Paris'; // la validité s'entend à l'heure française, celle des magasins
 // Campagnes : année du QR code => [premier jour, lendemain du dernier jour]
 const IZR_QR_CAMPAGNES = ['2027' => ['2027-01-01', '2028-01-01']];
@@ -31,6 +32,14 @@ $etat = $maintenant < $debut ? 'avant' : ($maintenant >= $fin ? 'apres' : 'valid
 $nom = htmlspecialchars($magasin['nom'], ENT_QUOTES, 'UTF-8');
 if ($etat !== 'valide') {
     http_response_code(410);
+} else {
+    // Un scan = une ouverture de la page pendant la validité, hors robots et préchargements.
+    $agent = (string) ($_SERVER['HTTP_USER_AGENT'] ?? '');
+    $prechargement = stripos(($_SERVER['HTTP_SEC_PURPOSE'] ?? '') . ($_SERVER['HTTP_PURPOSE'] ?? '') . ($_SERVER['HTTP_X_MOZ'] ?? ''), 'pre') !== false;
+    $robot = $agent === '' || preg_match('/bot|crawl|spider|slurp|preview|facebookexternalhit|whatsapp|telegram|curl|wget|python|monitor|headless/i', $agent) === 1;
+    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET' && !$prechargement && !$robot) {
+        izr_scan_noter($id);
+    }
 }
 ?>
 <!doctype html>

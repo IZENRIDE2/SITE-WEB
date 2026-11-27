@@ -61,7 +61,7 @@ $izrJeton = izr_h($_SESSION['jeton']);
 </style>
 <link rel="stylesheet" href="assets/css/espace-pro.css?v=20261127e">
 <?php if ($izrVue === 'stats') : ?>
-<script defer src="assets/js/espace-pro-stats.js?v=20261127c"></script>
+<script defer src="assets/js/espace-pro-stats.js?v=20261127f"></script>
 <?php endif; ?>
 </head>
 <body class="page">
@@ -102,6 +102,7 @@ $izrJeton = izr_h($_SESSION['jeton']);
   </div>
 </div>
 <?php if ($izrVue === 'stats') : ?>
+  <script type="application/json" id="pro-donnees"><?= json_encode(izr_scans_30_jours(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
   <div class="ps" id="pro-stats"><noscript><p class="ps-note">Cette page a besoin de JavaScript pour afficher les statistiques.</p></noscript></div>
 <?php elseif ($izrVue === 'comptes') : ?>
 <?php izr_console_afficher($izrConsole, $izrJeton, $_GET); ?>
