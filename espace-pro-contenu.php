@@ -53,8 +53,8 @@ if (!defined('IZR_PRO_OK')) { http_response_code(404); exit; }
 .pro-barre form{margin:0}
 .pro-barre button{min-height:44px;padding:0 16px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
 </style>
-<link rel="stylesheet" href="assets/css/espace-pro.css?v=20261127">
-<script defer src="assets/js/espace-pro-stats.js?v=20261127"></script>
+<link rel="stylesheet" href="assets/css/espace-pro.css?v=20261127b">
+<script defer src="assets/js/espace-pro-stats.js?v=20261127b"></script>
 </head>
 <body class="page">
 <a class="skip" href="#contenu">Aller au contenu</a>

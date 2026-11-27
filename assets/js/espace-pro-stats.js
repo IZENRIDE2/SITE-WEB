@@ -76,6 +76,22 @@
   function long(i) { return i === 29 ? "Aujourd'hui" : dateDe(i).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }); }
   var geo = { px: function (i) { return Math.round((56 + i * (904 / 29)) * 10) / 10; } };
 
+  function serieDe(k) {
+    var noms = etat.vue === 'toutes' ? Object.keys(BRUT) : [etat.vue], s = [];
+    for (var i = 0; i < 30; i++) s.push(noms.reduce(function (a, e) { return a + jours[e][k][i]; }, 0));
+    return s;
+  }
+  function etincelle(k) {
+    var s = serieDe(k), max = Math.max(1, Math.max.apply(null, s));
+    var pts = s.map(function (v, i) { return (Math.round((i * (120 / 29)) * 10) / 10) + ',' + (Math.round((30 - (v / max) * 26) * 10) / 10); }).join(' ');
+    return '<svg class="ps-etincelle" viewBox="0 0 120 32" preserveAspectRatio="none" aria-hidden="true"><polyline points="' + pts + '"/></svg>';
+  }
+  function anneau(a, b) {
+    var t = b === 0 ? 0 : Math.min(1, a / b), c = 2 * Math.PI * 18;
+    return '<svg class="ps-anneau" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="18"/><circle class="ps-anneau-val" cx="22" cy="22" r="18" stroke-dasharray="' + (Math.round(t * c * 10) / 10) + ' ' + (Math.round(c * 10) / 10) + '" transform="rotate(-90 22 22)"/></svg>';
+  }
+  function heure() { return new Date().toLocaleTimeString('fr-FR'); }
+
   function graphique() {
     var s = serieDuJour(), max = Math.max(3, Math.max.apply(null, s));
     var puissance = Math.pow(10, Math.floor(Math.log10(max / 3)));
@@ -90,10 +106,11 @@
       '<line x1="56" y1="260" x2="960" y2="260" class="ps-axe"/>' +
       '<text x="46" y="24" text-anchor="end">' + nf(haut) + '</text><text x="46" y="104" text-anchor="end">' + nf(pas * 2) + '</text><text x="46" y="184" text-anchor="end">' + nf(pas) + '</text><text x="46" y="264" text-anchor="end">0</text>' +
       '<text x="56" y="286">' + esc(court(0)) + '</text><text x="357" y="286" text-anchor="middle">' + esc(court(10)) + '</text><text x="659" y="286" text-anchor="middle">' + esc(court(20)) + '</text><text x="960" y="286" text-anchor="end">Aujourd’hui</text>' +
-      '<path class="ps-aire" d="M56,260 L' + pts.split(' ').join(' L') + ' L960,260 Z"/>' +
+      '<defs><linearGradient id="ps-degrade" x1="0" y1="0" x2="0" y2="1"><stop class="ps-stop-haut" offset="0"/><stop class="ps-stop-bas" offset="1"/></linearGradient></defs>' +
+      '<path class="ps-aire" fill="url(#ps-degrade)" d="M56,260 L' + pts.split(' ').join(' L') + ' L960,260 Z"/>' +
       '<polyline class="ps-courbe" points="' + pts + '"/>' +
       '<line class="ps-repere" x1="0" y1="20" x2="0" y2="260" opacity="0"/><circle class="ps-point ps-point-survol" r="5" cx="0" cy="0" opacity="0"/>' +
-      '<circle class="ps-point" r="5" cx="960" cy="' + geo.py(s[29]) + '"/>' +
+      '<circle class="ps-onde" r="5" cx="960" cy="' + geo.py(s[29]) + '"/><circle class="ps-point" r="5" cx="960" cy="' + geo.py(s[29]) + '"/>' +
       '<text class="ps-fin" x="952" y="' + Math.max(16, geo.py(s[29]) - 12) + '" text-anchor="end">' + nf(s[29]) + '</text>' +
       '</svg><div class="ps-bulle" role="status" hidden></div></div>' +
       '<button type="button" class="ps-lien" data-action="donnees" aria-expanded="' + etat.donnees + '">' + (etat.donnees ? 'Masquer les données' : 'Voir les données du graphique') + '</button>' +
@@ -115,7 +132,7 @@
         '<span class="ps-lueur">' + nf(m[etat.mesure]) + '</span></li>';
     }).join('') + '</ol>' : '<p class="ps-vide">Aucun magasin n’a encore de ' + MESURES[etat.mesure].toLowerCase() + '. Le classement apparaîtra avec les premières données.</p>';
     return '<div class="ps-carte-rang"><div class="ps-carte" role="img" aria-label="Carte de France des ' + liste.length + ' magasins. Le détail figure dans le classement plus bas.">' +
-      '<svg viewBox="0 0 600 620" aria-hidden="true"><path d="' + FRANCE + '"/></svg>' + points + '<div class="ps-bulle" role="status" hidden></div></div>' +
+      '<span class="ps-radar" aria-hidden="true"></span><svg viewBox="0 0 600 620" aria-hidden="true"><path d="' + FRANCE + '"/></svg>' + points + '<div class="ps-bulle" role="status" hidden></div></div>' +
       '<div class="ps-cote"><h3>Les cinq plus gros magasins</h3>' + podium + '</div></div>';
   }
 
@@ -136,14 +153,15 @@
       '<div class="ps-tete"><div><span class="kicker">Administration IzenRide</span><h1>Statistiques</h1>' +
       '<p class="lede">' + l.length + ' magasins' + (etat.vue === 'toutes' ? ', 2 enseignes' : ' ' + esc(etat.vue)) + ' · 30 derniers jours</p></div>' +
       '<button type="button" class="ps-lien" data-action="demo">' + (etat.demo ? 'Revenir aux données réelles' : 'Afficher un exemple simulé') + '</button></div>' +
+      '<div class="ps-etat" role="status"><span class="ps-voyant' + (etat.demo ? ' ps-voyant-actif' : '') + '">' + (etat.demo ? 'Simulation active' : 'Suivi non relié') + '</span><span>' + l.length + ' magasins suivis</span><span>Heure locale <b class="ps-horloge">' + heure() + '</b></span></div>' +
       (etat.demo
         ? '<p class="ps-note ps-note-demo"><strong>Exemple simulé.</strong> Ces chiffres sont générés par la page pour montrer son fonctionnement. Ce ne sont pas vos données.</p>'
         : '<p class="ps-note"><strong>Aucune donnée pour l’instant.</strong> Le suivi des scans, des inscriptions et des forfaits n’est pas encore relié à cette page : les compteurs restent à zéro.</p>') +
       '<div class="ps-groupe" role="group" aria-label="Enseigne affichée">' + boutons('vue', VUES, etat.vue) + '</div>' +
       '<div class="ps-tuiles">' +
-      '<div class="ps-tuile"><span>Scans de QR code</span><b>' + nf(sc) + '</b><small>sur les 30 derniers jours</small></div>' +
-      '<div class="ps-tuile"><span>Inscriptions</span><b>' + nf(ins) + '</b><small>' + pct(ins, sc) + ' des scans</small></div>' +
-      '<div class="ps-tuile"><span>Forfaits Premium</span><b>' + nf(fo) + '</b><small>' + pct(fo, ins) + ' des inscriptions</small></div></div>' +
+      '<div class="ps-tuile"><span class="ps-etq">Scans de QR code</span><b>' + nf(sc) + '</b><small>sur les 30 derniers jours</small>' + etincelle('scans') + '</div>' +
+      '<div class="ps-tuile"><span class="ps-etq">Inscriptions</span><b>' + nf(ins) + '</b><small>' + pct(ins, sc) + ' des scans</small>' + etincelle('inscriptions') + anneau(ins, sc) + '</div>' +
+      '<div class="ps-tuile"><span class="ps-etq">Forfaits Premium</span><b>' + nf(fo) + '</b><small>' + pct(fo, ins) + ' des inscriptions</small>' + etincelle('forfaits') + anneau(fo, ins) + '</div></div>' +
       '<section class="ps-bloc"><div class="ps-titre"><h2>' + MESURES[etat.mesure] + ' par jour</h2><div class="ps-groupe" role="group" aria-label="Mesure affichée">' + boutons('mesure', MESURES, etat.mesure) + '</div></div>' + graphique() + '</section>' +
       '<section class="ps-bloc"><div class="ps-titre"><h2>Carte des magasins</h2><p class="ps-legende"><span><i class="ps-marque ps-rond"></i>Maxxess (rond plein)</span><span><i class="ps-marque ps-carre"></i>Moto Axxe (carré évidé)</span></p></div>' + carte(l) + '</section>' +
       (etat.demo ? '<section class="ps-bloc"><h2>En direct</h2>' + (filVu.length ? '<ul class="ps-fil">' + filVu.map(function (f) { return '<li><span>' + esc(f.heure) + '</span><em>' + esc(f.quoi) + '</em><strong>' + esc(f.ou) + '</strong></li>'; }).join('') + '</ul>' : '<p class="ps-vide">Les prochains événements s’afficheront ici.</p>') + '</section>' : '') +
@@ -196,4 +214,5 @@
 
   charger(false);
   rendre();
+  setInterval(function () { var h = racine.querySelector('.ps-horloge'); if (h) h.textContent = heure(); }, 1000);
 })();
